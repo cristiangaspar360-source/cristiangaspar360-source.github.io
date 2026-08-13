@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portafolio de Proyectos — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Un programa con seis componentes sobre el ASR Daifuku Shuttle Rack M, más diez proyectos independientes de automatización SAP, análisis, control de piso y gestión operativa." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--signal)}
+  /* ---------- El programa ---------- */
+  .program{position:relative;background:var(--ink-2);border:1px solid var(--line-2);border-radius:22px;padding:clamp(22px,4vw,38px);overflow:hidden;margin-bottom:34px}
+  .program-aura{position:absolute;right:-130px;top:-160px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c-dash) 16%,transparent),transparent 66%);pointer-events:none}
+  .program > *{position:relative;z-index:2}
+  .pg-kick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .program h2{font-family:var(--font-display);font-weight:900;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.032em;line-height:1.04;margin-bottom:16px;max-width:18ch}
+  .pg-lede{color:var(--muted);font-size:1.02rem;max-width:64ch;margin-bottom:26px}
+  .pg-lede b{color:var(--text);font-weight:600}
+  .pg-grid{display:grid;gap:22px;grid-template-columns:1fr}
+  @media(min-width:860px){.pg-grid{grid-template-columns:1.1fr 1fr}}
+  .pg-mods{display:grid;gap:7px}
+  .pg-mod{display:grid;grid-template-columns:26px 1fr;gap:12px;align-items:center;padding:9px 12px;border-radius:9px;background:var(--ink);border:1px solid var(--line);font-size:.87rem;line-height:1.35;transition:border-color .22s var(--ease),transform .22s var(--ease)}
+  [data-theme="light"] .pg-mod{background:var(--ink-3)}
+  .pg-mod:hover{border-color:color-mix(in srgb,var(--c-dash) 45%,transparent);transform:translateX(3px)}
+  .pg-mod .pn{font-family:var(--font-mono);font-size:.6rem;font-weight:600;color:var(--c-dash);text-align:center}
+  .pg-thumb{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--ink-3)}
+  .pg-thumb svg{width:100%;height:auto;display:block}
+  .pg-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+  .pg-stat{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+  [data-theme="light"] .pg-stat{background:var(--ink-3)}
+  .pg-stat .sv{font-family:var(--font-display);font-weight:800;font-size:1.3rem;letter-spacing:-.025em;line-height:1}
+  .pg-stat .sl{font-family:var(--font-mono);font-size:.53rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-top:7px;line-height:1.4}
+  .pg-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .btn-dash{background:var(--c-dash);color:#0D1015}
+  .btn-dash:hover{transform:translateY(-2px);box-shadow:0 14px 28px -14px var(--c-dash)}
+  /* ---------- Rejilla de tarjetas ---------- */
+  .proj-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .filters{display:flex;flex-wrap:wrap;gap:8px}
+  .fb{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line-2);background:transparent;color:var(--muted);padding:8px 13px;border-radius:8px;cursor:pointer;transition:all .2s var(--ease);white-space:nowrap}
+  .fb:hover{border-color:var(--signal);color:var(--text)}
+  .fb.on{background:var(--signal);border-color:var(--signal);color:#0D1015}
+  .counter{font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
+  .counter b{color:var(--text);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:13px;position:relative;overflow:hidden;transition:transform .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease)}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--cat,var(--signal));z-index:4}
+  .card:hover{transform:translateY(-4px);border-color:var(--cat,var(--signal));box-shadow:var(--shadow)}
+  .card.hidden{display:none}
+  .card-media{margin:-22px -22px 2px;aspect-ratio:16/10;overflow:hidden;background:var(--ink-3);position:relative;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+  .card-media svg,.card-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
+  .card:hover .card-media svg,.card:hover .card-media img{transform:scale(1.035)}
+  .card-name{font-family:var(--font-display);font-weight:700;font-size:1.05rem;line-height:1.3;letter-spacing:-.01em}
+  .card-name a::after{content:"";position:absolute;inset:0;z-index:2}
+  .card-name a:focus-visible{outline:2px solid var(--cat,var(--signal));outline-offset:3px;border-radius:4px}
+  .card .badge{color:var(--cat,var(--signal));background:color-mix(in srgb,var(--cat,var(--signal)) 14%,transparent);border-color:color-mix(in srgb,var(--cat,var(--signal)) 30%,transparent)}
+  .card .badge .bdot{background:var(--cat,var(--signal))}
+  .card-desc{font-size:.9rem;color:var(--muted);line-height:1.55;flex:1}
+  .ctags{display:flex;flex-wrap:wrap;gap:6px}
+  .ctag{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.04em;text-transform:uppercase;background:var(--ink-3);color:var(--muted);padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;position:relative;z-index:3}
+  .pbtn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.62rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;padding:8px 13px;border-radius:8px;cursor:pointer;transition:all .2s var(--ease)}
+  .pbtn-doc{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .pbtn-doc:hover{border-color:var(--cat,var(--signal));transform:translateY(-1px)}
+  .pbtn-demo{background:transparent;color:var(--cat,var(--signal));border:1px solid var(--cat,var(--signal))}
+  .pbtn-demo:hover{background:var(--cat,var(--signal));color:#0D1015}
+  .pbtn svg{width:12px;height:12px}
+  .sub-label{display:flex;align-items:center;gap:12px;margin:44px 0 24px}
+  .sub-label .bar{width:26px;height:3px;border-radius:2px;background:var(--signal)}
+  .sub-label span{font-family:var(--font-display);font-weight:700;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="../index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Perfil
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">11 proyectos</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Portafolio</span>
+      <span class="mono">Molex · Daifuku Shuttle Rack M</span>
+    </div>
+    <h1 class="ptitle">Portafolio de Proyectos</h1>
+    <p class="thesis">Un programa con <b>seis componentes</b> sobre el almacén automático, y <b>diez proyectos independientes</b> de automatización SAP, análisis, control de piso y gestión operativa. Cada uno con su propia página y su propio detalle.</p>
+    <div class="rail rv">
+      <div><div class="rl">Programa</div><div class="rvl">1 · 6 componentes</div></div>
+      <div><div class="rl">Independientes</div><div class="rvl">10</div></div>
+      <div><div class="rl">Herramientas vivas</div><div class="rvl">3 prototipos</div></div>
+      <div><div class="rl">Periodo</div><div class="rvl">2022 – 2026</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:14px">
+  <div class="wrap">
+
+    <!-- ====== EL PROGRAMA ====== -->
+    <div class="program rv">
+      <div class="program-aura"></div>
+      <div class="pg-kick">
+        <span class="badge" style="--accent:var(--c-dash)"><span class="bdot"></span>El programa · 6 componentes</span>
+      </div>
+      <h2>Dashboard Inteligente de Capacidad ASR</h2>
+      <p class="pg-lede">Seis piezas que parecían proyectos separados son, en realidad, los componentes de un solo sistema: el panel que responde si el rack puede recibir lo que viene. <b>Un botón</b> dispara el script contra SAP, Power Query traduce y el tablero se pinta solo — donde antes había cuarenta minutos de extracción manual.</p>
+
+      <div class="pg-grid">
+        <div>
+          <div class="pg-mods">
+            <div class="pg-mod"><span class="pn">01</span><span>Sistema de Respaldo Automático de Información por Turno</span></div>
+            <div class="pg-mod"><span class="pn">02</span><span>Módulo de Control de Totes Vacíos</span></div>
+            <div class="pg-mod"><span class="pn">03</span><span>Módulo de Gestión de Rechazos y Errores ASR</span></div>
+            <div class="pg-mod"><span class="pn">04</span><span>Módulo de Materiales en Localidades de Paso</span></div>
+            <div class="pg-mod"><span class="pn">05</span><span>Módulo de Transferencias en Tránsito</span></div>
+            <div class="pg-mod"><span class="pn">06</span><span>Sistema de Alertas Visuales para Capacidad Crítica</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="pg-thumb" data-poster="dashboard-asr" style="--cat:var(--c-dash)"></div>
+          <div class="pg-stats">
+            <div class="pg-stat"><div class="sv">95.4<span style="font-size:.6em">%</span></div><div class="sl">Ocupación en el corte analizado</div></div>
+            <div class="pg-stat"><div class="sv">~2 min</div><div class="sl">Actualización completa desde SAP</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pg-acts">
+        <a class="btn btn-dash" href="dashboard-asr.html">Ver el programa completo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-line" href="https://sites.google.com/view/cristiangaspar-portfolio/prototipos/dashboard-estado-operativo-del-asr-daifuku" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
+          Simulación en vivo
+        </a>
+      </div>
+    </div>
+
+    <!-- ====== PROYECTOS INDEPENDIENTES ====== -->
+    <div class="sub-label rv"><span class="bar"></span><span>Proyectos independientes</span></div>
+
+    <div class="proj-bar rv">
+      <div class="filters">
+        <button class="fb on" data-f="all">Todos · 10</button>
+        <button class="fb" data-f="bi">Análisis &amp; BI · 2</button>
+        <button class="fb" data-f="auto">Automatización · 3</button>
+        <button class="fb" data-f="piso">Piso &amp; procesos · 3</button>
+        <button class="fb" data-f="gestion">Gestión · 1</button>
+        <button class="fb" data-f="producto">Producto · 1</button>
+      </div>
+      <div class="counter">Mostrando <b id="count">10</b> de 10</div>
+    </div>
+
+    <div class="grid" id="grid">
+
+      <article class="card rv" data-f="bi" style="--cat:var(--c-bi)">
+        <div class="card-media" data-poster="reporte-errores"></div>
+        <span class="badge"><span class="bdot"></span>Análisis &amp; BI</span>
+        <div class="card-name"><a href="reporte-errores-asr.html">Reporte de Errores ASR · ZMM400 → Power BI</a></div>
+        <div class="card-desc">La transacción ZMM400 registraba las alertas en código y nadie podía leerlas. Script de SAP para bajar el log, catálogo en Power Query que lo traduce a errores con nombre, y tablero de aumento y disminución embebido en el Teams de los supervisores de Daifuku.</div>
+        <div class="ctags"><span class="ctag">ZMM400</span><span class="ctag">Power Query</span><span class="ctag">Power BI</span><span class="ctag">Teams</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-demo" href="https://sites.google.com/view/cristiangaspar-portfolio/prototipos/power-bi-an%C3%A1lis-de-aumento-y-disminucion-de-errores-asr-por-turno" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.085.67l8.5-5.25a.75.75 0 0 0 0-1.34l-8.5-5.25A.75.75 0 0 0 3.75 2Z"/></svg>Power BI</a>
+          <a class="pbtn pbtn-doc" href="../herramientas/extraccion-errores.html">Prototipo</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="bi" style="--cat:var(--c-sap)">
+        <div class="card-media" data-poster="reempaque"></div>
+        <span class="badge"><span class="bdot"></span>Análisis &amp; BI</span>
+        <div class="card-name"><a href="validacion-reempaque.html">Validación y Seguimiento de Reempaque mediante Historial SAP</a></div>
+        <div class="card-desc">El avance del plan se reportaba a mano y por turno. Este sistema no le cree a nadie: cruza el plan del planner contra el historial real de SAP y deriva el avance. Señala qué número de parte está frenando la semana, mientras todavía se puede hacer algo.</div>
+        <div class="ctags"><span class="ctag">SAP Scripting</span><span class="ctag">Power Query</span><span class="ctag">VBA</span><span class="ctag">Plan vs. real</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-demo" href="../herramientas/validacion-reempaque.html"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.085.67l8.5-5.25a.75.75 0 0 0 0-1.34l-8.5-5.25A.75.75 0 0 0 3.75 2Z"/></svg>Probar validador</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="auto" style="--cat:var(--c-auto)">
+        <div class="card-media" data-poster="junta"></div>
+        <span class="badge"><span class="bdot"></span>Automatización</span>
+        <div class="card-name"><a href="junta-arranque.html">Automatización de la Junta de Arranque de Turno</a></div>
+        <div class="card-desc">Cinco pasos manuales —recolectar, copiar en varios Excel, pegar en PowerPoint— reemplazados por un solo archivo conectado a SAP que genera la presentación completa, con branding corporativo, en lo que tarda en abrirse.</div>
+        <div class="ctags"><span class="ctag">VBA</span><span class="ctag">Excel</span><span class="ctag">PowerPoint</span><span class="ctag">SAP</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/1RrryfoJni-IeT6fIAhx0H2ya90lttHRgDH8RIygFn2E/edit" target="_blank" rel="noopener">Documentación</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="auto" style="--cat:var(--c-dash)">
+        <div class="card-media" data-poster="modular"></div>
+        <span class="badge"><span class="bdot" style="animation:blink 1.4s infinite"></span>Demo funcional</span>
+        <div class="card-name"><a href="reporte-modular.html">Agente de Reporte Modular · Moldeo &amp; Ensamble</a></div>
+        <div class="card-desc">El reporte que de verdad circula no es el formal: es el mensaje de WhatsApp del arranque de turno. Esta aplicación lo captura en cuatro módulos y lo devuelve ya formateado —con barra de ocupación en caracteres— guardando historial y funcionando aun sin conexión a la nube.</div>
+        <div class="ctags"><span class="ctag">JavaScript</span><span class="ctag">Firebase</span><span class="ctag">WhatsApp</span><span class="ctag">localStorage</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-demo" href="../herramientas/agente-reporte-modular.html" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.085.67l8.5-5.25a.75.75 0 0 0 0-1.34l-8.5-5.25A.75.75 0 0 0 3.75 2Z"/></svg>Abrir herramienta</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="auto" style="--cat:var(--c-auto)">
+        <div class="card-media" data-poster="capas"></div>
+        <span class="badge"><span class="bdot"></span>Automatización</span>
+        <div class="card-name"><a href="reportes-turno.html">Automatización de Reportes Operativos por Turno</a></div>
+        <div class="card-desc">La generalización del patrón: separar la extracción, la transformación y la presentación en tres capas reutilizables. Es la decisión de arquitectura que hizo que el dashboard y el reporte de errores no tuvieran que construir la conexión a SAP otra vez.</div>
+        <div class="ctags"><span class="ctag">SAP Scripting</span><span class="ctag">VBA</span><span class="ctag">Power Query</span><span class="ctag">PPT</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/1T1dCbvfXT3U4HvvZ3TS1n5J76nLg1rfRNo_k1T5tLfk/edit" target="_blank" rel="noopener">Documentación</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="piso" style="--cat:var(--c-demo)">
+        <div class="card-media" data-poster="rechazos"></div>
+        <span class="badge"><span class="bdot"></span>Herramienta de piso</span>
+        <div class="card-name"><a href="rechazos-asr.html">Solución de errores e ingreso de rechazos en ASR</a></div>
+        <div class="card-desc">Cuando el ASR rechaza un tote, el materialista tiene un mensaje y ninguna instrucción. El procedimiento vivía en la cabeza de los más veteranos; lo convertí en un árbol de decisión de una hoja: cinco mensajes, cada uno con su acción de sistema, su acción física y su transacción de SAP.</div>
+        <div class="ctags"><span class="ctag">SAP WM</span><span class="ctag">LT22 / LT01</span><span class="ctag">Estandarización</span><span class="ctag">WRX</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-demo" href="rechazos-asr.html">Consultar el árbol</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="piso" style="--cat:var(--signal)">
+        <div class="card-media" data-poster="sellos"></div>
+        <span class="badge"><span class="bdot"></span>Herramienta de piso</span>
+        <div class="card-name"><a href="sellos-peso-alto.html">Identificación de sellos con peso alto</a></div>
+        <div class="card-desc">El ASR no admite sellos por encima de 15 kg, pero el peso se descubría en la banda: rechazo, tote detenido y entrada bloqueada. Este control los identifica antes de que lleguen al ingreso — y dejó al descubierto que un tercio de los registros no tiene el peso capturado, así que hoy pasan el filtro sin ser evaluados.</div>
+        <div class="ctags"><span class="ctag">Excel</span><span class="ctag">SAP</span><span class="ctag">Formato condicional</span><span class="ctag">Prevención</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-demo" href="sellos-peso-alto.html">Ver el control</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="piso" style="--cat:var(--c-sap)">
+        <div class="card-media" data-poster="totes"></div>
+        <span class="badge"><span class="bdot"></span>Proceso · SAP WM</span>
+        <div class="card-name"><a href="solicitud-totes.html">Optimización de Solicitud de Totes en SAP</a></div>
+        <div class="card-desc">Cada tote generaba su propia orden de transporte, y en un pico eso son decenas de órdenes compitiendo por el mismo rack. La técnica batch con LT01 agrupa la solicitud en una sola TO: mismo material, una fracción del ruido en la cola del ASR.</div>
+        <div class="ctags"><span class="ctag">SAP LT01</span><span class="ctag">Batch</span><span class="ctag">Proceso</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/1v3eYe0eZMoUPS52x6gfjWDaeOvAAUULAeR5wV_y3HrA/edit" target="_blank" rel="noopener">Documentación</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="gestion" style="--cat:var(--c-gestion)">
+        <div class="card-media" data-poster="roles"></div>
+        <span class="badge"><span class="bdot"></span>Gestión operativa</span>
+        <div class="card-name"><a href="roles-operativos.html">Sistema de Roles Operativos para Materialistas</a></div>
+        <div class="card-desc">El turno funcionaba porque ciertas personas sabían cosas que nadie más sabía — una cadena de puntos únicos de falla. Cuatro zonas críticas con rotación por competencias eliminaron esa dependencia y garantizaron cobertura completa del turno.</div>
+        <div class="ctags"><span class="ctag">Diseño organizacional</span><span class="ctag">Capacitación cruzada</span><span class="ctag">Liderazgo</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/11BILDeR0NpoA9VxPDKPPmWJDBxBQ-0i4EILuifo190o/edit" target="_blank" rel="noopener">Documentación</a>
+        </div>
+      </article>
+
+      <article class="card rv" data-f="producto" style="--cat:var(--c-prod)">
+        <div class="card-media" data-poster="reservaos"></div>
+        <span class="badge"><span class="bdot"></span>Producto · Iniciativa propia</span>
+        <div class="card-name"><a href="https://sites.google.com/view/cristiangaspar-portfolio/portfolio-de-proyectos/proyecto-local-de-iniciativa-propia" target="_blank" rel="noopener">ReservaOS — MYOB Intelligence</a></div>
+        <div class="card-desc">Caso de estudio fuera de la planta: diagnóstico operativo de cinco balnearios de Villa Corona y diseño de una solución de reservas por digitalización ligera, validado con investigación web independiente.</div>
+        <div class="ctags"><span class="ctag">Diagnóstico</span><span class="ctag">Excel</span><span class="ctag">Power Query</span><span class="ctag">Dashboard</span></div>
+        <div class="actions">
+          <a class="pbtn pbtn-demo" href="https://sites.google.com/view/cristiangaspar-portfolio/portfolio-de-proyectos/proyecto-local-de-iniciativa-propia" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.085.67l8.5-5.25a.75.75 0 0 0 0-1.34l-8.5-5.25A.75.75 0 0 0 3.75 2Z"/></svg>Ver el caso</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Portafolio de proyectos</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script src="../assets/posters.js"></script>
+<script>
+(function(){
+  "use strict";
+  var fbs = document.querySelectorAll('.fb'),
+      cards = document.querySelectorAll('#grid .card'),
+      countEl = document.getElementById('count');
+  fbs.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      fbs.forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      var f = btn.dataset.f, visible = 0;
+      cards.forEach(function(c){
+        var show = f === 'all' || c.dataset.f === f;
+        c.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+      countEl.textContent = visible;
+    });
+  });
+})();
+</script>
+</body>
+</html>

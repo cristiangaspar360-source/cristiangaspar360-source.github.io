@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Automatización de la Junta de Arranque de Turno — Cristian Gaspar Aguayo</title>
+<meta name="description" content="De recolectar datos e imágenes a mano y armar el PowerPoint del relevo, a un solo archivo Excel con macros conectado a SAP que genera la presentación con branding corporativo." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-auto)}
+  /* Simulador de generación */
+  .gen{display:grid;gap:16px;grid-template-columns:1fr}
+  @media(min-width:800px){.gen{grid-template-columns:1fr 1.1fr}}
+  .slide{aspect-ratio:16/9;background:var(--ink);border:1px solid var(--line);border-radius:11px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+  [data-theme="light"] .slide{background:#fff}
+  .slide .sTop{height:5px;background:linear-gradient(90deg,#E1140A,#E1140A 62%,var(--line) 62%)}
+  .slide .sBody{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:9px;opacity:0;transition:opacity .4s var(--ease)}
+  .slide.on .sBody{opacity:1}
+  .slide .sTitle{font-family:var(--font-display);font-weight:800;font-size:.86rem;letter-spacing:-.01em;color:var(--text)}
+  .slide .sMeta{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.12em;color:var(--muted)}
+  .slide .sGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:2px}
+  .slide .sBox{background:var(--ink-3);border:1px solid var(--line);border-radius:6px;padding:7px 8px}
+  .slide .sBox b{display:block;font-family:var(--font-display);font-weight:800;font-size:.92rem;letter-spacing:-.02em}
+  .slide .sBox span{font-family:var(--font-mono);font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .slide .sChart{flex:1;display:flex;align-items:flex-end;gap:5px;padding-top:6px;min-height:42px}
+  .slide .sChart i{flex:1;background:var(--accent);border-radius:2px 2px 0 0;opacity:.8;transform-origin:bottom;transform:scaleY(0);transition:transform .5s var(--ease)}
+  .slide.on .sChart i{transform:scaleY(1)}
+  .slide .sFoot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:7px}
+  .slide .sBrand{font-family:var(--font-display);font-weight:900;font-size:.62rem;letter-spacing:-.02em;color:#E1140A}
+  .slide .ghost{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:9px;padding:20px;transition:opacity .3s var(--ease)}
+  .slide.on .ghost{opacity:0;pointer-events:none}
+  .slide .ghost .gh{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .runbtn{width:100%;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;padding:13px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:transform .18s var(--ease),opacity .2s;display:flex;align-items:center;justify-content:center;gap:9px}
+  [data-theme="light"] .runbtn{color:#fff}
+  .runbtn:hover{transform:translateY(-2px)}
+  .runbtn[disabled]{opacity:.6;cursor:progress;transform:none}
+  .runbtn svg{width:15px;height:15px}
+  .steps{display:flex;flex-direction:column;gap:0;margin-top:14px}
+  .stp{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);opacity:.4;transition:opacity .3s var(--ease)}
+  .stp:last-child{border-bottom:none}
+  .stp.done,.stp.act{opacity:1}
+  .stp .sd{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;border:1px solid var(--line);font-family:var(--font-mono);font-size:.55rem;color:var(--muted);transition:all .3s var(--ease)}
+  .stp.act .sd{border-color:var(--accent);color:var(--accent)}
+  .stp.done .sd{background:var(--ok);border-color:var(--ok);color:#0D1015}
+  .stp .st{font-size:.87rem}
+  .stp .sx{font-family:var(--font-mono);font-size:.56rem;letter-spacing:.09em;color:var(--muted)}
+  /* Calculadora */
+  .calc{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end}
+  .calc .cf label{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px}
+  .calc .cf input{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:11px 13px;color:var(--text);font-family:var(--font-display);font-weight:800;font-size:1.25rem;letter-spacing:-.02em;outline:none;transition:border-color .2s}
+  [data-theme="light"] .calc .cf input{background:var(--ink-3)}
+  .calc .cf input:focus{border-color:var(--accent)}
+  .calc .out{background:color-mix(in srgb,var(--accent) 11%,transparent);border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);border-radius:9px;padding:11px 15px}
+  .calc .out .ol{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .calc .out .ov{font-family:var(--font-display);font-weight:900;font-size:1.7rem;letter-spacing:-.03em;color:var(--accent);line-height:1.1;margin-top:6px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">03 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Automatización</span>
+      <span class="mono">Molex · Relevo de turno</span>
+    </div>
+    <h1 class="ptitle">Automatización de la Junta de Arranque de Turno</h1>
+    <p class="thesis">Cada relevo empezaba con la misma escena: alguien copiando cifras de SAP a varios Excel, pegando capturas en un PowerPoint y llegando tarde a su propia junta. Reemplacé esa cadena por <b>un solo archivo de Excel conectado a SAP</b> que genera la presentación completa —con el branding de la planta— en lo que tarda en abrirse.</p>
+    <div class="rail rv">
+      <div><div class="rl">Entrada</div><div class="rvl">SAP → Excel (XLSM)</div></div>
+      <div><div class="rl">Salida</div><div class="rvl">PowerPoint con branding</div></div>
+      <div><div class="rl">Motor</div><div class="rvl">VBA · macros</div></div>
+      <div><div class="rl">Frecuencia</div><div class="rvl">Cada turno</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Antes y después</h2></div>
+    <p class="sec-note rv">El proyecto no cambió el contenido de la junta. Cambió <b>todo lo que había que hacer antes</b> de poder tenerla — y con eso cambió también en qué se gasta la junta.</p>
+
+    <div class="ba rv">
+      <div class="ba-side before">
+        <div class="bah"><span class="tagl">Antes</span><span class="bat">Cinco pasos manuales</span></div>
+        <ul class="chain">
+          <li><span class="cd">1</span><span class="ct">Recolección manual de datos e imágenes<span class="cs">Capturas de pantalla y consultas una por una.</span></span></li>
+          <li><span class="cd">2</span><span class="ct">Copiado en múltiples archivos de Excel<span class="cs">Cada área con su libro; ninguno se hablaba con otro.</span></span></li>
+          <li><span class="cd">3</span><span class="ct">Integración manual en PowerPoint<span class="cs">Pegar, reacomodar, corregir el formato roto.</span></span></li>
+          <li><span class="cd">4</span><span class="ct">Presentación al equipo<span class="cs">Con datos que ya tenían minutos de retraso.</span></span></li>
+          <li><span class="cd">5</span><span class="ct">Análisis e interpretación, variable<span class="cs">Dependía de quién armó el archivo ese día.</span></span></li>
+        </ul>
+      </div>
+      <div class="ba-side after">
+        <div class="bah"><span class="tagl">Después</span><span class="bat">Un botón</span></div>
+        <ul class="chain">
+          <li><span class="cd">1</span><span class="ct">Datos conectados desde SAP<span class="cs">Sin captura intermedia: la fuente es la fuente.</span></span></li>
+          <li><span class="cd">2</span><span class="ct">Un solo archivo Excel con macros<span class="cs">XLSM con VBA: un origen, una versión, un responsable.</span></span></li>
+          <li><span class="cd">3</span><span class="ct">Generación automática en PowerPoint<span class="cs">Las láminas se arman solas, siempre con el mismo orden.</span></span></li>
+          <li><span class="cd">4</span><span class="ct">Presentación con branding corporativo<span class="cs">Formato estable, sin retoques de última hora.</span></span></li>
+          <li><span class="cd">5</span><span class="ct">Análisis ágil y generación de ideas<span class="cs">La junta se usa para decidir, no para leer datos en voz alta.</span></span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>La generación, paso a paso</h2></div>
+    <p class="sec-note rv">Ejecuta la macro para ver qué ocurre entre el clic y la lámina terminada.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div><div class="pt-name">Generador de junta de arranque</div><div class="pt-sub">Excel XLSM · macro «Generar presentación»</div></div>
+        <span class="badge live"><span class="bdot"></span>Interactivo</span>
+      </div>
+      <div class="panel-body">
+        <div class="gen">
+          <div>
+            <button class="runbtn" id="runBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
+              Generar presentación
+            </button>
+            <div class="steps" id="steps">
+              <div class="stp"><span class="sd">1</span><span class="st">Conectar a SAP y refrescar consultas</span><span class="sx">SAP</span></div>
+              <div class="stp"><span class="sd">2</span><span class="st">Consolidar KPIs del turno en el libro</span><span class="sx">Excel</span></div>
+              <div class="stp"><span class="sd">3</span><span class="st">Construir gráficas del periodo</span><span class="sx">VBA</span></div>
+              <div class="stp"><span class="sd">4</span><span class="st">Volcar láminas en la plantilla</span><span class="sx">PPT</span></div>
+              <div class="stp"><span class="sd">5</span><span class="st">Aplicar branding y guardar</span><span class="sx">PPT</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="slide" id="slide">
+              <div class="sTop"></div>
+              <div class="sBody">
+                <div>
+                  <div class="sTitle">Arranque de turno · Almacén e Inventarios</div>
+                  <div class="sMeta">Generado automáticamente</div>
+                </div>
+                <div class="sGrid">
+                  <div class="sBox"><b>95.4 %</b><span>Ocupación ASR</span></div>
+                  <div class="sBox"><b>1 719</b><span>TO's abiertas</span></div>
+                  <div class="sBox"><b>122</b><span>Errores</span></div>
+                </div>
+                <div class="sChart">
+                  <i style="height:38%"></i><i style="height:62%"></i><i style="height:45%"></i>
+                  <i style="height:88%"></i><i style="height:70%"></i><i style="height:100%"></i><i style="height:55%"></i>
+                </div>
+                <div class="sFoot"><span class="sMeta">Relevo · pendientes y seguridad</span><span class="sBrand">molex</span></div>
+              </div>
+              <div class="ghost">
+                <div class="gh">Lámina pendiente</div>
+                <div style="font-size:.82rem;color:var(--muted)">Ejecuta la macro para armarla</div>
+              </div>
+            </div>
+            <div class="kgrid" style="margin-top:12px">
+              <div class="kbox"><div class="kl">Estado</div><div class="kv" style="font-size:1.05rem" id="genState">En espera</div></div>
+              <div class="kbox"><div class="kl">Láminas</div><div class="kv" id="genSlides">0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Reconstrucción del flujo · la macro real corre sobre el libro de la operación</div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>Qué se recupera</h2></div>
+    <p class="sec-note rv">La preparación manual tomaba entre <b>15 y 20 minutos por turno</b>. El resto es aritmética — ajusta los supuestos con tu propia operación.</p>
+
+    <div class="panel rv">
+      <div class="panel-top"><div><div class="pt-name">Tiempo recuperado</div><div class="pt-sub">Proyección a partir de supuestos, no de una medición</div></div></div>
+      <div class="panel-body">
+        <div class="calc">
+          <div class="cf"><label for="minT">Minutos por turno</label><input type="number" id="minT" value="17" min="1" max="120"></div>
+          <div class="cf"><label for="turnos">Turnos por día</label><input type="number" id="turnos" value="3" min="1" max="4"></div>
+          <div class="cf"><label for="dias">Días operados al año</label><input type="number" id="dias" value="300" min="1" max="365"></div>
+          <div class="out"><div class="ol">Horas al año</div><div class="ov" id="outH">255</div></div>
+        </div>
+        <p class="note" style="margin-top:22px">Prefiero decirlo así y no como un ahorro cerrado: <b>no medí el impacto en dinero</b>. Lo que sí es verificable es que la preparación dejó de existir y que la presentación llega igual todos los días, la arme quien la arme.</p>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Cifra derivada de los supuestos de arriba · ajústalos y cambia sola</div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">04</span><h2>Qué habilita</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Una sola versión de la verdad.</b> Al desaparecer los libros paralelos, dos supervisores no pueden llegar con cifras distintas del mismo turno.</span></li>
+      <li><span class="tk">→</span><span><b>La junta cambia de propósito.</b> Deja de ser lectura de datos y pasa a ser interpretación y acuerdos.</span></li>
+      <li><span class="tk">→</span><span><b>El relevo no depende de la persona.</b> Cualquiera del equipo genera la misma presentación con el mismo formato.</span></li>
+      <li><span class="tk">→</span><span><b>Base para lo demás.</b> El mismo patrón —SAP → Excel con macros → salida formateada— se reutilizó después en el <a href="dashboard-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">Dashboard de Capacidad ASR</a> y en el <a href="reporte-errores-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">reporte de errores</a>.</span></li>
+    </ul>
+
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="https://docs.google.com/document/d/1RrryfoJni-IeT6fIAhx0H2ya90lttHRgDH8RIygFn2E/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+      <a class="btn btn-line" href="reporte-modular.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg>
+        Ver la evolución: el agente modular
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">Excel VBA</span><span class="tag hl">PowerPoint</span><span class="tag hl">SAP</span>
+      <span class="tag">Macros</span><span class="tag">Plantilla corporativa</span><span class="tag">Relevo de turno</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="reporte-errores-asr.html"><span class="pl">Proyecto anterior</span><span class="pt">Reporte de Errores ASR · ZMM400</span></a>
+      <a href="validacion-reempaque.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Validación y Seguimiento de Reempaque</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 03 · Automatización</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var btn = document.getElementById('runBtn');
+  var stps = Array.prototype.slice.call(document.querySelectorAll('#steps .stp'));
+  var slide = document.getElementById('slide');
+  var gState = document.getElementById('genState');
+  var gSlides = document.getElementById('genSlides');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function reset(){
+    stps.forEach(function(s){ s.classList.remove('done','act'); });
+    slide.classList.remove('on');
+    gState.textContent = 'En espera';
+    gSlides.textContent = '0';
+  }
+
+  btn.addEventListener('click', function(){
+    if (btn.disabled) return;
+    btn.disabled = true;
+    reset();
+    if (reduce){
+      stps.forEach(function(s){ s.classList.add('done'); });
+      slide.classList.add('on'); gState.textContent='Lista'; gSlides.textContent='8'; btn.disabled=false; return;
+    }
+    var i = 0;
+    (function step(){
+      if (i > 0) stps[i-1].classList.replace('act','done');
+      if (i >= stps.length){
+        slide.classList.add('on');
+        gState.textContent = 'Lista';
+        gState.style.color = 'var(--ok)';
+        gSlides.textContent = '8';
+        btn.disabled = false;
+        return;
+      }
+      stps[i].classList.add('act');
+      gState.textContent = ['Conectando…','Consolidando…','Graficando…','Volcando…','Aplicando marca…'][i];
+      gState.style.color = '';
+      gSlides.textContent = String(Math.round((i+1) * 1.6));
+      i++;
+      setTimeout(step, 620);
+    })();
+  });
+
+  /* Calculadora de tiempo recuperado */
+  var f = ['minT','turnos','dias'].map(function(id){ return document.getElementById(id); });
+  var out = document.getElementById('outH');
+  function calc(){
+    var m = parseFloat(f[0].value)||0, t = parseFloat(f[1].value)||0, d = parseFloat(f[2].value)||0;
+    out.textContent = Math.round(m * t * d / 60).toLocaleString('es-MX');
+  }
+  f.forEach(function(el){ el.addEventListener('input', calc); });
+  calc();
+})();
+</script>
+</body>
+</html>

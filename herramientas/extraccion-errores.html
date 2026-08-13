@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Extractor y traductor de errores ASR · ZMM400 → variación por periodo</title>
+<meta name="description" content="Prototipo funcional: pega el log crudo de ZMM400, tradúcelo con el catálogo de errores y obtén el Pareto y el tablero de aumento y disminución entre dos periodos." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-bi)}
+  body{padding-bottom:40px}
+  .tool-head{padding:34px 0 26px;border-bottom:1px solid var(--line);margin-bottom:28px}
+  .tool-head h1{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,3.4vw,2.1rem);letter-spacing:-.028em;line-height:1.1;margin:14px 0 12px}
+  .tool-head p{color:var(--muted);max-width:68ch;font-size:.98rem}
+  .io{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:900px){.io{grid-template-columns:1.25fr 1fr}}
+  .box{background:var(--ink-2);border:1px solid var(--line);border-radius:13px;overflow:hidden;display:flex;flex-direction:column}
+  .box .bh{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--ink-3)}
+  .box .bt2{font-family:var(--font-display);font-weight:700;font-size:.9rem;letter-spacing:-.01em}
+  .box .bs{font-family:var(--font-mono);font-size:.53rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  textarea{width:100%;min-height:240px;resize:vertical;background:var(--ink);border:none;padding:14px 16px;color:var(--text);font-family:var(--font-mono);font-size:.76rem;line-height:1.65;outline:none}
+  [data-theme="light"] textarea{background:#fff}
+  textarea:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+  .bar2{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 26px}
+  .b2{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;padding:11px 18px;border-radius:9px;cursor:pointer;transition:transform .16s var(--ease),background .2s,color .2s,border-color .2s;border:1px solid var(--line-2);background:transparent;color:var(--text)}
+  .b2:hover{transform:translateY(-2px);border-color:var(--accent);color:var(--accent)}
+  .b2.pri{background:var(--accent);border-color:var(--accent);color:#0D1015}
+  .b2.pri:hover{color:#0D1015}
+  .b2:active{transform:scale(.98)}
+  .msg{font-size:.85rem;margin-left:auto}
+  .grid2{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:880px){.grid2{grid-template-columns:1fr 1fr}}
+  .big2{font-family:var(--font-display);font-weight:900;font-size:2.9rem;line-height:1;letter-spacing:-.045em}
+  .delta{font-family:var(--font-mono);font-weight:600;font-size:.8rem;white-space:nowrap}
+  .delta.down{color:var(--ok)} .delta.up{color:var(--risk)} .delta.flat{color:var(--muted)}
+  .unk{background:color-mix(in srgb,var(--warn) 10%,transparent);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:10px;padding:13px 16px;font-size:.87rem;line-height:1.5;margin-top:16px}
+  .unk b{color:var(--warn)}
+  .unk code{font-family:var(--font-mono);font-size:.8em;background:var(--ink-3);padding:2px 6px;border-radius:4px;margin-right:5px;display:inline-block}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="../proyectos/reporte-errores-asr.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Volver al proyecto
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">Prototipo</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tool-head">
+    <span class="badge"><span class="bdot"></span>Prototipo funcional</span>
+    <h1>Extractor y traductor de errores ASR</h1>
+    <p>Reproduce la parte que hace el trabajo real: pega el <b>log crudo</b> tal como sale de <code class="k">ZMM400</code>, y el catálogo lo traduce a errores con nombre, arma el Pareto y calcula la <b>variación entre los dos periodos</b> — el mismo número que se publica en Teams. El catálogo es editable: así se ve por qué la traducción es la pieza clave y no un detalle.</p>
+  </div>
+
+  <div class="io">
+    <div class="box">
+      <div class="bh"><div class="bt2">1 · Log crudo</div><div class="bs">Periodo · mensaje del ASR · una línea por evento</div></div>
+      <textarea id="inLog" spellcheck="false" aria-label="Log crudo de ZMM400"></textarea>
+    </div>
+    <div class="box">
+      <div class="bh"><div class="bt2">2 · Catálogo de traducción</div><div class="bs">patrón = error con nombre</div></div>
+      <textarea id="inCat" spellcheck="false" aria-label="Catálogo de traducción"></textarea>
+    </div>
+  </div>
+
+  <div class="bar2">
+    <button class="b2 pri" id="btnRun">Traducir y analizar</button>
+    <button class="b2" id="btnEj">Cargar ejemplo W48 / W49</button>
+    <button class="b2" id="btnClr">Limpiar</button>
+    <span class="msg" id="msg"></span>
+  </div>
+
+  <div id="res" hidden>
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="panel">
+        <div class="panel-top"><div><div class="pt-name">Variación entre periodos</div><div class="pt-sub" id="varSub">—</div></div></div>
+        <div class="panel-body">
+          <div class="big2" id="varBig">—</div>
+          <p style="color:var(--muted);font-size:.9rem;margin-top:10px" id="varTxt">—</p>
+          <div class="kgrid" style="margin-top:18px">
+            <div class="kbox"><div class="kl" id="lblA">Periodo A</div><div class="kv" id="totA">0</div></div>
+            <div class="kbox"><div class="kl" id="lblB">Periodo B</div><div class="kv" id="totB">0</div></div>
+            <div class="kbox"><div class="kl">Tipos</div><div class="kv" id="nTipos">0</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-top">
+          <div><div class="pt-name">Pareto de errores</div><div class="pt-sub" id="parSub">—</div></div>
+          <div class="seg" id="segP"></div>
+        </div>
+        <div class="panel-body"><div class="bars" id="pareto"></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-top"><div><div class="pt-name">Detalle por tipo de error</div><div class="pt-sub">Ordenado por volumen total</div></div></div>
+      <div class="panel-body scrollx" style="padding-top:6px">
+        <table class="dt" style="min-width:520px" id="tbl">
+          <thead><tr><th>Error con nombre</th><th class="r" id="thA">A</th><th class="r" id="thB">B</th><th class="r">Total</th><th class="r">Variación</th></tr></thead>
+          <tbody></tbody><tfoot></tfoot>
+        </table>
+      </div>
+      <div class="panel-body" style="padding-top:0" id="unkWrap"></div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:26px">
+    <b>Cómo leerlo.</b> El log entra como <span class="mono" style="font-size:.72rem;color:var(--text)">periodo · mensaje</span> (tabulador, coma o punto y coma). El catálogo es <span class="mono" style="font-size:.72rem;color:var(--text)">patrón = nombre</span>: si el mensaje <em>contiene</em> el patrón, se traduce. Lo que ningún patrón alcanza no se descarta — aparece abajo como <b>sin catalogar</b>, que es exactamente lo que hace el sistema real para que un código nuevo no se pierda en silencio.
+  </div>
+</div>
+
+<footer class="pf">
+  <div class="wrap">
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Prototipo del <a href="../proyectos/reporte-errores-asr.html" style="color:var(--accent)">reporte de errores ASR</a></span>
+      <span class="fm">Corre 100 % en el navegador</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var esc = function(s){ return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+  var CAT_EJ = [
+    'UBIC_INHAB     = Ubicación inhabilitada',
+    'NO DESTINATION = Ubicación inhabilitada',
+    'ORD_AFECT      = Orden afectada',
+    'SIN_EXPED      = Sin expediente de recibo',
+    'WRX_PEND       = Tote con carga pendiente (WRX)',
+    'WRX_DUP        = Tote duplicado en WRX',
+    'BAD_READ       = Código de barras ilegible',
+    'INVALID BARCODE= Código de barras ilegible',
+    'UNKNOWN_LOAD   = Carga desconocida'
+  ].join('\n');
+
+  // Conteos reales del corte analizado
+  var EJ = { W48:{UBIC_INHAB:164, ORD_AFECT:88, SIN_EXPED:71, WRX_PEND:52, WRX_DUP:37, BAD_READ:14, UNKNOWN_LOAD:9},
+             W49:{UBIC_INHAB:89,  ORD_AFECT:4,  SIN_EXPED:13, WRX_PEND:7,  WRX_DUP:6,  BAD_READ:2,  UNKNOWN_LOAD:1} };
+
+  function buildLog(){
+    var lines = [];
+    Object.keys(EJ).forEach(function(w){
+      Object.keys(EJ[w]).forEach(function(code){
+        for (var i = 0; i < EJ[w][code]; i++) lines.push(w + '\t' + code);
+      });
+    });
+    return lines.join('\n');
+  }
+
+  function split(line){ return line.split(/\t|;|,/).map(function(s){ return s.trim(); }); }
+
+  function parseCat(text){
+    var out = [];
+    text.split(/\r?\n/).forEach(function(l){
+      if (!l.trim() || l.trim().charAt(0) === '#') return;
+      var i = l.indexOf('=');
+      if (i < 1) return;
+      var pat = l.slice(0, i).trim().toUpperCase();
+      var name = l.slice(i + 1).trim();
+      if (pat && name) out.push({ pat: pat, name: name });
+    });
+    return out;
+  }
+
+  var state = null;
+
+  function run(){
+    var cat = parseCat($('inCat').value);
+    if (!cat.length){ note('El catálogo está vacío: sin él no hay traducción.', true); return; }
+
+    var periods = [], counts = {}, unknown = {}, total = 0;
+    $('inLog').value.split(/\r?\n/).forEach(function(line){
+      if (!line.trim()) return;
+      var p = split(line);
+      var per = p.length > 1 ? p[0] : '—';
+      var msg = (p.length > 1 ? p.slice(1).join(' ') : p[0]).toUpperCase();
+      if (!msg) return;
+      if (periods.indexOf(per) === -1) periods.push(per);
+
+      var hit = null;
+      for (var i = 0; i < cat.length; i++){ if (msg.indexOf(cat[i].pat) !== -1){ hit = cat[i].name; break; } }
+      if (!hit){ unknown[msg] = (unknown[msg] || 0) + 1; return; }
+      counts[hit] = counts[hit] || {};
+      counts[hit][per] = (counts[hit][per] || 0) + 1;
+      total++;
+    });
+
+    if (!total && !Object.keys(unknown).length){ note('No encontré eventos que analizar.', true); return; }
+    periods.sort();
+
+    var rows = Object.keys(counts).map(function(name){
+      var r = { name: name, per: counts[name], total: 0 };
+      periods.forEach(function(p){ r.total += (r.per[p] || 0); });
+      return r;
+    }).sort(function(a, b){ return b.total - a.total; });
+
+    state = { rows: rows, periods: periods, total: total };
+    renderVar();
+    renderSeg();
+    renderTable(unknown);
+    $('res').hidden = false;
+    note(total.toLocaleString('es-MX') + ' eventos traducidos en ' + rows.length + ' tipos.', false);
+  }
+
+  function renderVar(){
+    var P = state.periods;
+    var a = P[0], b = P[P.length - 1];
+    var sum = function(p){ return state.rows.reduce(function(s, r){ return s + (r.per[p] || 0); }, 0); };
+    var A = sum(a), B = sum(b);
+    $('lblA').textContent = a; $('lblB').textContent = b;
+    $('thA').textContent  = a; $('thB').textContent  = b;
+    $('totA').textContent = A.toLocaleString('es-MX');
+    $('totB').textContent = B.toLocaleString('es-MX');
+    $('nTipos').textContent = state.rows.length;
+    $('varSub').textContent = P.length > 1 ? (a + ' → ' + b) : 'Un solo periodo';
+
+    if (P.length < 2 || !A){
+      $('varBig').textContent = '—';
+      $('varBig').style.color = 'var(--muted)';
+      $('varTxt').textContent = 'Se necesitan al menos dos periodos en el log para calcular la variación.';
+      return;
+    }
+    var v = (B - A) / A * 100;
+    $('varBig').textContent = (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1) + ' %';
+    $('varBig').style.color = v > 0 ? 'var(--risk)' : (v < 0 ? 'var(--ok)' : 'var(--muted)');
+    var subieron = state.rows.filter(function(r){ return (r.per[b] || 0) > (r.per[a] || 0); }).length;
+    $('varTxt').innerHTML = A.toLocaleString('es-MX') + ' → ' + B.toLocaleString('es-MX') + ' eventos. ' +
+      (subieron ? '<b>' + subieron + '</b> ' + (subieron === 1 ? 'tipo de error subió' : 'tipos de error subieron') + '; el resto bajó.'
+                : 'Ningún tipo de error subió.');
+  }
+
+  function renderSeg(){
+    var opts = ['TOTAL'].concat(state.periods);
+    $('segP').innerHTML = opts.map(function(o, i){
+      return '<button data-v="' + esc(o) + '" aria-pressed="' + (i === 0) + '">' + esc(o) + '</button>';
+    }).join('');
+    $('segP').onclick = function(ev){
+      var b = ev.target.closest('button'); if (!b) return;
+      $('segP').querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b); });
+      renderPareto(b.dataset.v);
+    };
+    renderPareto('TOTAL');
+  }
+
+  function renderPareto(key){
+    var COLORS = ['var(--risk)','var(--crit)','var(--crit)','var(--warn)','var(--warn)','var(--accent)','var(--accent)'];
+    var rows = state.rows.map(function(r){
+      return { n: r.name, v: key === 'TOTAL' ? r.total : (r.per[key] || 0) };
+    }).sort(function(a, b){ return b.v - a.v; });
+    var tot = rows.reduce(function(s, r){ return s + r.v; }, 0);
+    var max = rows.length ? rows[0].v : 1;
+    $('parSub').textContent = key === 'TOTAL'
+      ? 'Acumulado · ' + tot.toLocaleString('es-MX') + ' eventos'
+      : key + ' · ' + tot.toLocaleString('es-MX') + ' eventos';
+    $('pareto').innerHTML = rows.map(function(r, i){
+      return '<div class="brow"><span class="bl">' + esc(r.n) + '</span>' +
+        '<span class="btrack"><span class="bfill" data-w="' + (max ? (r.v / max * 100).toFixed(1) : 0) +
+        '" style="--bc:' + (COLORS[i] || 'var(--accent)') + '"></span></span>' +
+        '<span class="bv">' + r.v + '<span class="bpc">' + (tot ? (r.v / tot * 100).toFixed(1) : '0.0') + ' %</span></span></div>';
+    }).join('');
+    requestAnimationFrame(function(){
+      $('pareto').querySelectorAll('.bfill').forEach(function(f){ f.style.width = f.dataset.w + '%'; });
+    });
+  }
+
+  function renderTable(unknown){
+    var P = state.periods, a = P[0], b = P[P.length - 1];
+    var tA = 0, tB = 0, tT = 0;
+    document.querySelector('#tbl tbody').innerHTML = state.rows.map(function(r){
+      var va = r.per[a] || 0, vb = r.per[b] || 0;
+      tA += va; tB += vb; tT += r.total;
+      var d, cls;
+      if (P.length < 2 || !va){ d = '—'; cls = 'flat'; }
+      else { var pv = (vb - va) / va * 100; cls = pv > 0 ? 'up' : (pv < 0 ? 'down' : 'flat');
+             d = (pv > 0 ? '+' : (pv < 0 ? '−' : '')) + Math.abs(pv).toFixed(1) + ' %'; }
+      return '<tr><td>' + esc(r.name) + '</td><td class="r n">' + va + '</td><td class="r n">' + vb +
+             '</td><td class="r n">' + r.total + '</td><td class="r"><span class="delta ' + cls + '">' + d + '</span></td></tr>';
+    }).join('');
+    var dt = tA ? (tB - tA) / tA * 100 : 0;
+    document.querySelector('#tbl tfoot').innerHTML =
+      '<tr><td>Total</td><td class="r">' + tA + '</td><td class="r">' + tB + '</td><td class="r">' + tT +
+      '</td><td class="r"><span class="delta ' + (dt > 0 ? 'up' : dt < 0 ? 'down' : 'flat') + '">' +
+      (tA ? (dt > 0 ? '+' : '−') + Math.abs(dt).toFixed(1) + ' %' : '—') + '</span></td></tr>';
+
+    var keys = Object.keys(unknown);
+    $('unkWrap').innerHTML = keys.length
+      ? '<div class="unk"><b>' + keys.length + (keys.length === 1 ? ' patrón sin catalogar' : ' patrones sin catalogar') +
+        '.</b> No se descartan: hay que darlos de alta en el catálogo para que dejen de ser invisibles.<div style="margin-top:10px">' +
+        keys.slice(0, 12).map(function(k){ return '<code>' + esc(k) + ' · ' + unknown[k] + '</code>'; }).join('') +
+        (keys.length > 12 ? '<span style="color:var(--muted);font-size:.8rem">y ' + (keys.length - 12) + ' más…</span>' : '') +
+        '</div></div>'
+      : '<div class="unk" style="background:color-mix(in srgb,var(--ok) 9%,transparent);border-color:color-mix(in srgb,var(--ok) 28%,transparent)"><b style="color:var(--ok)">Cero patrones sin catalogar.</b> Todos los eventos del log encontraron traducción.</div>';
+  }
+
+  function note(t, isErr){
+    $('msg').textContent = t;
+    $('msg').style.color = isErr ? 'var(--risk)' : 'var(--ok)';
+    if (!isErr) setTimeout(function(){ $('msg').textContent = ''; }, 3500);
+  }
+
+  $('btnRun').addEventListener('click', run);
+  $('btnEj').addEventListener('click', function(){
+    $('inLog').value = buildLog(); $('inCat').value = CAT_EJ; run();
+  });
+  $('btnClr').addEventListener('click', function(){
+    $('inLog').value = ''; $('res').hidden = true; $('msg').textContent = '';
+  });
+
+  // Arranca con el ejemplo cargado
+  $('inLog').value = buildLog();
+  $('inCat').value = CAT_EJ;
+  run();
+})();
+</script>
+</body>
+</html>

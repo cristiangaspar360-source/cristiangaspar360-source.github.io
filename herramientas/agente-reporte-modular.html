@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente de Reporte Modular - Moldeo y Ensamble</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-pop {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .btn-pop:active {
+            transform: scale(0.96);
+        }
+
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
+        @keyframes toastIn {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .animate-toast {
+            animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16 antialiased">
+    <div class="max-w-6xl mx-auto p-3 sm:p-6">
+
+        <!-- Header Principal -->
+        <header class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-200/80 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-gradient-to-tr from-teal-700 to-teal-500 rounded-2xl flex items-center justify-center text-2xl text-white shadow-lg shadow-teal-500/20">
+                    ⚙️
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase">AGENTE MODULAR</h1>
+                        <span class="bg-teal-100 text-teal-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full uppercase">MOL / ASY</span>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-500 mt-0.5">Control de Arranque de Turno • Moldeo & Ensamble</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                <div class="text-left md:text-right">
+                    <span id="header-date" class="block text-xs font-bold text-slate-700">Cargando fecha...</span>
+                    <span id="user-id-badge" class="text-[10px] text-teal-600 font-extrabold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                        <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span> Supervisor: Conectando...
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Toast Notification Engine -->
+        <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-6 py-3 rounded-full shadow-2xl z-50 hidden flex items-center gap-2 transition-all">
+            <span id="toast-icon">ℹ️</span>
+            <span id="toast-msg">Mensaje del sistema</span>
+        </div>
+
+        <!-- Main Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: Formulario Modular -->
+            <div class="lg:col-span-7 space-y-6">
+                <form id="shift-form" onsubmit="handleFormSubmit(event)" class="space-y-6">
+
+                    <!-- 1. SECCIÓN GLOBAL -->
+                    <section class="glass-card p-5 sm:p-6 rounded-3xl shadow-sm border-t-8 border-t-teal-600">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-sm font-black text-teal-900 uppercase tracking-wider flex items-center gap-2">
+                                <span class="p-1.5 bg-teal-100 text-teal-700 rounded-lg text-xs">🌐</span> 1. Datos Globales del Turno
+                            </h2>
+                            <span class="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md uppercase">Estatus General</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Tipo de Turno -->
+                            <div>
+                                <label for="shiftType" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Tipo de Turno</label>
+                                <select id="shiftType" class="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500 transition">
+                                    <option value="Mañana">☀️ Mañana</option>
+                                    <option value="Tarde">🌤️ Tarde</option>
+                                    <option value="Noche">🌙 Noche</option>
+                                </select>
+                            </div>
+
+                            <!-- Personal Presente -->
+                            <div>
+                                <label for="staffPresent" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">👥 Personal Presente</label>
+                                <input type="number" id="staffPresent" placeholder="Ej: 30" min="0" required class="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500 transition">
+                            </div>
+
+                            <!-- Ocupación ASR Global -->
+                            <div>
+                                <label for="asrGlobalOccupation" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">⬆️ Ocupación ASR Global (%)</label>
+                                <input type="number" id="asrGlobalOccupation" placeholder="Ej: 88" min="0" max="100" required oninput="updateLiveAsrBar()" class="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500 transition">
+                                <p id="asr-live-bar" class="text-[11px] font-mono font-bold text-teal-700 mt-1.5 bg-teal-50/80 p-2 rounded-xl border border-teal-100 text-center">
+                                    🟢 [░░░░░░░░░░] 0% OCUPADO
+                                </p>
+                            </div>
+
+                            <!-- Totes Vacíos Global -->
+                            <div>
+                                <label for="emptyTotes" class="block text-[11px] font-bold text-slate-600 uppercase mb-1">📦 Totes Vacíos Disponibles</label>
+                                <input type="number" id="emptyTotes" placeholder="Ej: 150" min="0" class="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-teal-500 transition">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. SECCIÓN MOLDEO (MOL) -->
+                    <section class="glass-card p-5 sm:p-6 rounded-3xl shadow-sm border-t-8 border-t-amber-500 bg-amber-50/10">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-sm font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                                <span class="p-1.5 bg-amber-100 text-amber-700 rounded-lg text-xs">🔩</span> 2. Área Moldeo (MOL)
+                            </h2>
+                            <span class="text-[10px] font-extrabold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md uppercase">Operación Inyección</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label for="moldeoMachinesWorking" class="block text-[10px] font-bold text-slate-600 uppercase mb-1">🔩 Máquinas Trabajo</label>
+                                <input type="number" id="moldeoMachinesWorking" placeholder="Ej: 5" min="0" class="w-full bg-white border border-amber-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 transition">
+                            </div>
+
+                            <div>
+                                <label for="moldeoTotesForASRLt22" class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Totes ASR en Lt22</label>
+                                <input type="number" id="moldeoTotesForASRLt22" placeholder="Ej: 120" min="0" class="w-full bg-white border border-amber-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 transition">
+                            </div>
+
+                            <div>
+                                <label for="moldeoRejectedPalletTotes" class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Totes Pallet Rechazos</label>
+                                <input type="number" id="moldeoRejectedPalletTotes" placeholder="Ej: 12" min="0" class="w-full bg-white border border-amber-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 transition">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. SECCIÓN ENSAMBLE (ASY) -->
+                    <section class="glass-card p-5 sm:p-6 rounded-3xl shadow-sm border-t-8 border-t-blue-500 bg-blue-50/10">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-sm font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
+                                <span class="p-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs">⚙️</span> 3. Área Ensamble (ASY)
+                            </h2>
+                            <span class="text-[10px] font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md uppercase">Líneas Ensamblado</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label for="ensambleMachinesWorking" class="block text-[10px] font-bold text-slate-600 uppercase mb-1">⚙️ Máquinas Trabajo</label>
+                                <input type="number" id="ensambleMachinesWorking" placeholder="Ej: 8" min="0" class="w-full bg-white border border-blue-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            </div>
+
+                            <div>
+                                <label for="ensambleTotesForASYLt22" class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Totes ASR para ASY (Lt22)</label>
+                                <input type="number" id="ensambleTotesForASYLt22" placeholder="Ej: 85" min="0" class="w-full bg-white border border-blue-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            </div>
+
+                            <div>
+                                <label for="ensambleAccumulatedRetTotes" class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Totes Acum. ASY RET</label>
+                                <input type="number" id="ensambleAccumulatedRetTotes" placeholder="Ej: 5" min="0" class="w-full bg-white border border-blue-200/80 rounded-2xl p-3 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. TRASPASO Y NOTAS -->
+                    <section class="glass-card p-5 rounded-3xl shadow-sm space-y-4">
+                        <h2 class="text-xs font-black text-slate-400 uppercase tracking-wider">4. Traspaso y Seguridad</h2>
+
+                        <div>
+                            <label for="handoverSummary" class="block text-[11px] font-bold text-slate-700 uppercase mb-1">📋 Resumen de Traspaso (Turno Anterior)</label>
+                            <textarea id="handoverSummary" rows="2" class="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-teal-500 resize-none transition" placeholder="Ej: Pendiente mantenimiento del chiller de Moldeo. Hay 2 montacargas fuera de servicio..."></textarea>
+                        </div>
+
+                        <div>
+                            <label for="safetyNotes" class="block text-[11px] font-bold text-slate-700 uppercase mb-1">🚨 Notas de Seguridad / Incidentes</label>
+                            <textarea id="safetyNotes" rows="2" class="w-full bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-teal-500 resize-none transition" placeholder="Ej: Se realizó simulacro de evacuación sin incidentes mayores..."></textarea>
+                        </div>
+                    </section>
+
+                    <!-- BOTÓN SUBMIT -->
+                    <button type="submit" id="submit-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-black py-4 rounded-2xl transition btn-pop flex items-center justify-center gap-2 shadow-lg shadow-teal-600/20 text-sm">
+                        <span>💾</span> GUARDAR REPORTE DE ARRANQUE
+                    </button>
+                </form>
+            </div>
+
+            <!-- RIGHT COLUMN: Preview WhatsApp & Historial -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- PREVIEW REPORTE WHATSAPP -->
+                <section class="glass-card p-5 sm:p-6 rounded-3xl shadow-sm border-l-8 border-l-emerald-500 bg-white">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                            <span class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs">💬</span> Previsualización WhatsApp
+                        </h2>
+                        <span class="text-[9px] font-extrabold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase">En Vivo</span>
+                    </div>
+
+                    <div id="whatsapp-preview" class="bg-slate-900 text-emerald-400 font-mono text-[11px] leading-relaxed p-4 rounded-2xl whitespace-pre-wrap border border-slate-800 max-h-72 overflow-y-auto scrollbar-custom shadow-inner">
+                        Rellena el formulario para generar la vista previa del reporte...
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button type="button" onclick="copyCurrentPreview()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3 rounded-2xl transition btn-pop flex items-center justify-center gap-1.5 text-xs shadow-md">
+                            <span>📋</span> Copiar
+                        </button>
+                        <button type="button" onclick="sendWhatsAppCurrent()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-2xl transition btn-pop flex items-center justify-center gap-1.5 text-xs shadow-lg shadow-emerald-600/20">
+                            <span>📱</span> WhatsApp
+                        </button>
+                    </div>
+                </section>
+
+                <!-- HISTORIAL DE REPORTES -->
+                <section class="glass-card p-5 rounded-3xl shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider">Historial de Reportes Guardados</h3>
+                        <span class="text-[9px] font-extrabold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase">Recientes</span>
+                    </div>
+                    <div id="history-list" class="space-y-3 max-h-[380px] overflow-y-auto pr-1 scrollbar-custom">
+                        <p class="text-center py-8 text-xs text-slate-400 italic">Aún no hay reportes registrados.</p>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'agente-modular-moldeo-asy';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        let db = null;
+        let auth = null;
+        let userId = 'supervisor-local';
+        let savedReports = [];
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            updateDateHeader();
+            setupLiveFormListeners();
+
+            // Try Firebase Init
+            try {
+                if (firebaseConfig && firebaseConfig.apiKey) {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    await signInAnonymously(auth);
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            document.getElementById('user-id-badge').innerHTML = `
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supervisor: ${userId.substring(0, 8)}...
+                            `;
+                            subscribeToReports();
+                        } else {
+                            loadLocalStorageReports();
+                        }
+                    });
+                } else {
+                    loadLocalStorageReports();
+                }
+            } catch (err) {
+                console.warn("Firebase no disponible, usando almacenamiento local:", err);
+                loadLocalStorageReports();
+            }
+
+            updateLiveAsrBar();
+            updateLivePreview();
+        });
+
+        function updateDateHeader() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+            document.getElementById('header-date').textContent = dateStr.toUpperCase();
+        }
+
+        // Generates the ASR progress bar for WhatsApp (10 blocks)
+        window.generateAsrBar = function(percentage) {
+            const p = Math.max(0, Math.min(100, parseInt(percentage || 0, 10)));
+            const filledBlocks = Math.round(p / 10);
+            const emptyBlocks = 10 - filledBlocks;
+            const bar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+
+            let emoji = '🟢';
+            if (p > 90) {
+                emoji = '🔴'; // Critical
+            } else if (p > 70) {
+                emoji = '🟠'; // Warning
+            }
+
+            return `${emoji} [${bar}] ${p}% OCUPADO`;
+        };
+
+        window.updateLiveAsrBar = function() {
+            const val = document.getElementById('asrGlobalOccupation').value;
+            const barText = generateAsrBar(val);
+            document.getElementById('asr-live-bar').textContent = barText;
+            updateLivePreview();
+        };
+
+        function getFormData() {
+            return {
+                shiftType: document.getElementById('shiftType').value || 'Mañana',
+                staffPresent: parseInt(document.getElementById('staffPresent').value, 10) || 0,
+                asrGlobalOccupation: parseInt(document.getElementById('asrGlobalOccupation').value, 10) || 0,
+                emptyTotes: parseInt(document.getElementById('emptyTotes').value, 10) || 0,
+
+                moldeoMachinesWorking: parseInt(document.getElementById('moldeoMachinesWorking').value, 10) || 0,
+                moldeoTotesForASRLt22: parseInt(document.getElementById('moldeoTotesForASRLt22').value, 10) || 0,
+                moldeoRejectedPalletTotes: parseInt(document.getElementById('moldeoRejectedPalletTotes').value, 10) || 0,
+
+                ensambleMachinesWorking: parseInt(document.getElementById('ensambleMachinesWorking').value, 10) || 0,
+                ensambleTotesForASYLt22: parseInt(document.getElementById('ensambleTotesForASYLt22').value, 10) || 0,
+                ensambleAccumulatedRetTotes: parseInt(document.getElementById('ensambleAccumulatedRetTotes').value, 10) || 0,
+
+                handoverSummary: document.getElementById('handoverSummary').value.trim(),
+                safetyNotes: document.getElementById('safetyNotes').value.trim()
+            };
+        }
+
+        window.generateWhatsappReport = function(data) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES');
+            const timeStr = now.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+            const asrBar = generateAsrBar(data.asrGlobalOccupation);
+
+            return `🚨 *REPORTE MODULAR - ${data.shiftType.toUpperCase()}* 🚨\n` +
+                   `*Fecha:* ${dateStr} - ${timeStr}\n` +
+                   `*Supervisor:* ${userId.substring(0, 8)}...\n\n` +
+                   `---\n` +
+                   `*🏭 ESTADO GLOBAL*\n` +
+                   `*👥 Personal Presente:* ${data.staffPresent} personas.\n` +
+                   `*⬆️ ASR Ocupación Global:* ${asrBar}\n` +
+                   `*📦 Totes Vacíos Global:* ${data.emptyTotes} unidades.\n\n` +
+                   `---\n` +
+                   `*🔩 MOLDEO*\n` +
+                   `*Máquinas Trabajando:* ${data.moldeoMachinesWorking}\n` +
+                   `*Totes para ASR (Lt22):* ${data.moldeoTotesForASRLt22}\n` +
+                   `*Totes Rechazos Pallet:* ${data.moldeoRejectedPalletTotes}\n\n` +
+                   `---\n` +
+                   `*⚙️ ENSAMBLE (ASY)*\n` +
+                   `*Máquinas Trabajando:* ${data.ensambleMachinesWorking}\n` +
+                   `*Totes ASR para ASY (Lt22):* ${data.ensambleTotesForASYLt22}\n` +
+                   `*Totes Acumulados (ASY RET):* ${data.ensambleAccumulatedRetTotes}\n\n` +
+                   `---\n` +
+                   `*⚠️ PENDIENTES Y TRASPASO*\n` +
+                   `*Resumen de Traspaso:* ${data.handoverSummary || 'Sin resumen de traspaso.'}\n` +
+                   `*Notas de Seguridad:* ${data.safetyNotes || 'Ninguna alerta de seguridad.'}`;
+        };
+
+        function updateLivePreview() {
+            const data = getFormData();
+            const reportText = generateWhatsappReport(data);
+            document.getElementById('whatsapp-preview').textContent = reportText;
+        }
+
+        function setupLiveFormListeners() {
+            const inputs = document.querySelectorAll('#shift-form input, #shift-form select, #shift-form textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateLivePreview);
+                input.addEventListener('change', updateLivePreview);
+            });
+        }
+
+        window.handleFormSubmit = async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>⌛</span> Guardando...`;
+
+            const data = getFormData();
+            const reportText = generateWhatsappReport(data);
+
+            const reportPayload = {
+                ...data,
+                whatsappReport: reportText,
+                timestamp: db ? serverTimestamp() : new Date().toISOString(),
+                displayTime: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                displayDate: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+            };
+
+            if (db && userId) {
+                try {
+                    const colRef = collection(db, 'artifacts', appId, 'users', userId, 'shift_reports_modular');
+                    await addDoc(colRef, reportPayload);
+                    showToast("💾 Reporte guardado en la nube", "success");
+                } catch (err) {
+                    console.error("Error guardando en Firestore:", err);
+                    saveToLocalStorageFallback(reportPayload);
+                }
+            } else {
+                saveToLocalStorageFallback(reportPayload);
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>💾</span> GUARDAR REPORTE DE ARRANQUE`;
+        };
+
+        function saveToLocalStorageFallback(entry) {
+            try {
+                const existing = JSON.parse(localStorage.getItem('modular_reports_cache') || '[]');
+                existing.unshift(entry);
+                localStorage.setItem('modular_reports_cache', JSON.stringify(existing.slice(0, 20)));
+                renderHistoryUI(existing.slice(0, 20));
+                showToast("💾 Reporte guardado localmente", "success");
+            } catch (err) {
+                showToast("❌ Error al guardar reporte", "error");
+            }
+        }
+
+        function loadLocalStorageReports() {
+            try {
+                const existing = JSON.parse(localStorage.getItem('modular_reports_cache') || '[]');
+                renderHistoryUI(existing);
+            } catch (err) {
+                console.error("Error leyendo historial local:", err);
+            }
+        }
+
+        function subscribeToReports() {
+            if (!db || !userId) return;
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'users', userId, 'shift_reports_modular');
+                const q = query(colRef, limit(20));
+                onSnapshot(q, (snapshot) => {
+                    const reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    reports.sort((a, b) => {
+                        const timeA = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp || 0).getTime();
+                        const timeB = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp || 0).getTime();
+                        return timeB - timeA;
+                    });
+                    renderHistoryUI(reports);
+                }, (err) => {
+                    console.warn("Error suscribiendo a Firestore:", err);
+                    loadLocalStorageReports();
+                });
+            } catch (err) {
+                console.warn("Error iniciando suscripción Firestore:", err);
+                loadLocalStorageReports();
+            }
+        }
+
+        function renderHistoryUI(reports) {
+            savedReports = reports;
+            const container = document.getElementById('history-list');
+            if (!container) return;
+
+            if (!reports || reports.length === 0) {
+                container.innerHTML = `<p class="text-center py-8 text-xs text-slate-400 italic">Aún no hay reportes registrados.</p>`;
+                return;
+            }
+
+            container.innerHTML = reports.map((report, idx) => {
+                const asrBar = generateAsrBar(report.asrGlobalOccupation);
+                const shiftEmoji = report.shiftType === 'Mañana' ? '☀️' : (report.shiftType === 'Tarde' ? '🌤️' : '🌙');
+
+                return `
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition border-l-4 border-l-teal-500">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-extrabold text-teal-800">${shiftEmoji} Turno ${report.shiftType}</span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">${report.displayDate || ''} - ${report.displayTime || ''}</span>
+                        </div>
+
+                        <div class="text-xs font-semibold text-slate-600 space-y-1 mb-2">
+                            <p><span class="font-bold text-slate-800">👥 Personal:</span> ${report.staffPresent} pers. | <span class="font-bold text-slate-800">📦 Vacíos:</span> ${report.emptyTotes}</p>
+                            <p class="font-mono text-[11px] text-teal-700">${asrBar}</p>
+                        </div>
+
+                        <details class="text-xs mt-2 cursor-pointer group">
+                            <summary class="font-bold text-teal-600 hover:text-teal-800 transition py-1">Ver detalles completos</summary>
+                            <div class="mt-2 space-y-2 p-3 bg-teal-50/70 rounded-xl text-[11px] border border-teal-100 font-mono text-slate-700">
+                                <p><strong class="text-teal-900">🔩 MOL:</strong> ${report.moldeoMachinesWorking} Máq | ${report.moldeoTotesForASRLt22} Totes Lt22 | ${report.moldeoRejectedPalletTotes} Rechazos</p>
+                                <p><strong class="text-teal-900">⚙️ ASY:</strong> ${report.ensambleMachinesWorking} Máq | ${report.ensambleTotesForASYLt22} Totes Lt22 | ${report.ensambleAccumulatedRetTotes} RET</p>
+                                ${report.handoverSummary ? `<p><strong class="text-teal-900">📋 Traspaso:</strong> ${report.handoverSummary}</p>` : ''}
+                                ${report.safetyNotes ? `<p><strong class="text-teal-900">🚨 Seguridad:</strong> ${report.safetyNotes}</p>` : ''}
+
+                                <button onclick="window.copyReportFromHistory(${idx})" class="mt-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition text-xs flex items-center justify-center gap-1">
+                                    <span>📋</span> Copiar a WhatsApp
+                                </button>
+                            </div>
+                        </details>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    showToast("📋 ¡Reporte copiado al portapapeles!", "success");
+                    return;
+                }
+            } catch (err) {
+                console.warn("Clipboard API no soportada en este iframe, usando fallback:", err);
+            }
+
+            // Fallback para Google Sites/iframes
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast("📋 ¡Reporte copiado con éxito!", "success");
+                } else {
+                    showToast("❌ No se pudo copiar automáticamente.", "error");
+                }
+            } catch (err) {
+                showToast("❌ Error al acceder al portapapeles.", "error");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        window.copyCurrentPreview = function() {
+            const text = document.getElementById('whatsapp-preview').textContent;
+            copyToClipboard(text);
+        };
+
+        window.sendWhatsAppCurrent = function() {
+            const text = document.getElementById('whatsapp-preview').textContent;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        };
+
+        window.copyReportFromHistory = function(index) {
+            if (savedReports && savedReports[index]) {
+                const text = savedReports[index].whatsappReport || generateWhatsappReport(savedReports[index]);
+                copyToClipboard(text);
+            }
+        };
+
+        window.showToast = function(msg, type = "info") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-msg');
+
+            icon.textContent = type === "success" ? "✅" : (type === "error" ? "❌" : "ℹ️");
+            text.textContent = msg;
+
+            toast.classList.remove('hidden');
+            toast.classList.add('animate-toast');
+
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        };
+    </script>
+</body>
+</html>

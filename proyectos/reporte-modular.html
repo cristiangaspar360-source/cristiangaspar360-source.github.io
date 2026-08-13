@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agente de Reporte Modular · Moldeo &amp; Ensamble — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Aplicación web que captura el arranque de turno en cuatro módulos y devuelve el reporte listo para WhatsApp, con historial en la nube y respaldo local. Demo funcional." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-dash)}
+  .demo{display:grid;gap:18px;grid-template-columns:1fr}
+  @media(min-width:840px){.demo{grid-template-columns:1fr 300px}}
+  .wa{background:#0B141A;border:1px solid var(--line);border-radius:14px;padding:16px;font-family:var(--font-mono);font-size:.72rem;line-height:1.7;color:#E9EDEF;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto}
+  .wa b{color:#25D366;font-weight:600}
+  .wa .bar10{color:#F5A524}
+  .fields{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
+  .fld2 label{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+  .fld2 input,.fld2 select{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font-mono);font-size:.8rem;outline:none;transition:border-color .2s}
+  [data-theme="light"] .fld2 input,[data-theme="light"] .fld2 select{background:var(--ink-3)}
+  .fld2 input:focus,.fld2 select:focus{border-color:var(--accent)}
+  .modblock{border:1px solid var(--line);border-radius:12px;padding:15px;background:var(--ink-2);border-top:3px solid var(--mc,var(--accent))}
+  .modblock + .modblock{margin-top:11px}
+  .modblock .mbh{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mc,var(--accent));margin-bottom:12px;font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">08 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge live"><span class="bdot"></span>Demo funcional</span>
+      <span class="mono">Molex · Moldeo &amp; Ensamble</span>
+    </div>
+    <h1 class="ptitle">Agente de Reporte Modular</h1>
+    <p class="thesis">La junta de arranque resolvió el reporte <em>formal</em>. Faltaba el otro, el que de verdad circula: el mensaje de WhatsApp del arranque de turno, escrito a mano cada vez, distinto cada vez y sin registro después. Esta aplicación lo captura en <b>cuatro módulos</b> y devuelve el mensaje ya formateado — con historial, y funcionando incluso sin conexión a la nube.</p>
+    <div class="rail rv">
+      <div><div class="rl">Tipo</div><div class="rvl">Aplicación web</div></div>
+      <div><div class="rl">Canal de salida</div><div class="rvl">WhatsApp</div></div>
+      <div><div class="rl">Persistencia</div><div class="rvl">Firestore + localStorage</div></div>
+      <div><div class="rl">Estado</div><div class="rvl">Funcional · embebible</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Por qué WhatsApp y no otro reporte</h2></div>
+    <div class="prose rv">
+      <p>Porque es donde ya estaba la conversación. Intentar mover a los supervisores a una herramienta nueva habría fracasado; lo que sí funciona es <b>entregarles el mensaje ya escrito en el canal que usan</b>. La aplicación no cambia el hábito, cambia lo que cuesta cumplirlo.</p>
+      <p>El detalle que lo hace usable en piso: el reporte sale con la <b>barra de ocupación del ASR dibujada en caracteres</b> (<span class="mono" style="font-size:.72rem;color:var(--text)">🟠 [████████░░] 80&nbsp;%</span>). En un teléfono, a las seis de la mañana, esa barra se entiende antes que el número.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>Los cuatro módulos</h2></div>
+    <p class="sec-note rv">Doce campos, agrupados como está organizada la planta. Cambia cualquiera y mira la vista previa: es la misma lógica que corre en la herramienta real.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div><div class="pt-name">Captura del arranque de turno</div><div class="pt-sub">Vista previa en vivo</div></div>
+        <span class="badge live"><span class="bdot"></span>Interactivo</span>
+      </div>
+      <div class="panel-body">
+        <div class="demo">
+          <div>
+            <div class="modblock" style="--mc:var(--c-dash)">
+              <div class="mbh">1 · Datos globales del turno</div>
+              <div class="fields">
+                <div class="fld2"><label for="fTurno">Turno</label>
+                  <select id="fTurno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></div>
+                <div class="fld2"><label for="fPers">Personal</label><input type="number" id="fPers" value="30" min="0"></div>
+                <div class="fld2"><label for="fOcc">Ocupación ASR %</label><input type="number" id="fOcc" value="88" min="0" max="100"></div>
+                <div class="fld2"><label for="fTot">Totes vacíos</label><input type="number" id="fTot" value="150" min="0"></div>
+              </div>
+            </div>
+            <div class="modblock" style="--mc:var(--signal)">
+              <div class="mbh">2 · Área Moldeo (MOL)</div>
+              <div class="fields">
+                <div class="fld2"><label for="mMaq">Máquinas</label><input type="number" id="mMaq" value="5" min="0"></div>
+                <div class="fld2"><label for="mLt22">Totes ASR Lt22</label><input type="number" id="mLt22" value="120" min="0"></div>
+                <div class="fld2"><label for="mRech">Pallet rechazos</label><input type="number" id="mRech" value="12" min="0"></div>
+              </div>
+            </div>
+            <div class="modblock" style="--mc:var(--c-auto)">
+              <div class="mbh">3 · Área Ensamble (ASY)</div>
+              <div class="fields">
+                <div class="fld2"><label for="aMaq">Máquinas</label><input type="number" id="aMaq" value="8" min="0"></div>
+                <div class="fld2"><label for="aLt22">Totes ASY Lt22</label><input type="number" id="aLt22" value="85" min="0"></div>
+                <div class="fld2"><label for="aRet">Acum. ASY RET</label><input type="number" id="aRet" value="5" min="0"></div>
+              </div>
+            </div>
+            <div class="modblock" style="--mc:var(--muted)">
+              <div class="mbh">4 · Traspaso y seguridad</div>
+              <div class="fields" style="grid-template-columns:1fr">
+                <div class="fld2"><label for="fTrasp">Resumen de traspaso</label><input type="text" id="fTrasp" value="Pendiente mantenimiento del chiller de Moldeo."></div>
+                <div class="fld2"><label for="fSeg">Notas de seguridad</label><input type="text" id="fSeg" value="Sin incidentes."></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mono" style="font-size:.55rem;margin-bottom:9px">Vista previa · WhatsApp</div>
+            <div class="wa" id="wa"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Réplica de la lógica de formato de la herramienta · la versión completa guarda historial y abre WhatsApp</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>Decisiones técnicas que importan en piso</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Degrada sin romperse.</b> Si Firebase no está disponible, la aplicación no falla: guarda en <code class="k">localStorage</code> y sigue trabajando. En una planta, una herramienta que exige conexión es una herramienta que un día no está.</span></li>
+      <li><span class="tk">→</span><span><b>Copiar funciona dentro de un iframe.</b> La API de portapapeles está bloqueada en muchos contextos embebidos, así que hay un respaldo con <code class="k">execCommand</code>. Sin eso, el botón principal no serviría dentro de Google Sites.</span></li>
+      <li><span class="tk">→</span><span><b>Vista previa en vivo.</b> El supervisor ve el mensaje final mientras captura; no hay sorpresa al enviar.</span></li>
+      <li><span class="tk">→</span><span><b>Historial consultable.</b> Cada reporte queda guardado y se puede volver a copiar — el turno anterior deja de ser un recuerdo.</span></li>
+    </ul>
+
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="../herramientas/agente-reporte-modular.html" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
+        Abrir la herramienta completa
+      </a>
+      <a class="btn btn-line" href="junta-arranque.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        De dónde viene: la junta de arranque
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">JavaScript</span><span class="tag hl">Firebase / Firestore</span><span class="tag hl">Tailwind</span>
+      <span class="tag">localStorage</span><span class="tag">WhatsApp API</span><span class="tag">Responsive</span><span class="tag">Embebible</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="reportes-turno.html"><span class="pl">Proyecto anterior</span><span class="pt">Reportes Operativos por Turno</span></a>
+      <a href="solicitud-totes.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Optimización de Solicitud de Totes en SAP</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 08 · Demo funcional</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var ids = ['fTurno','fPers','fOcc','fTot','mMaq','mLt22','mRech','aMaq','aLt22','aRet','fTrasp','fSeg'];
+  var el = {};
+  ids.forEach(function(i){ el[i] = document.getElementById(i); });
+  var wa = document.getElementById('wa');
+
+  function bar(p){
+    p = Math.max(0, Math.min(100, parseInt(p || 0, 10)));
+    var f = Math.round(p / 10);
+    var emoji = p > 90 ? '🔴' : (p > 70 ? '🟠' : '🟢');
+    return emoji + ' [' + '█'.repeat(f) + '░'.repeat(10 - f) + '] ' + p + '% OCUPADO';
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function v(id){ return esc(el[id].value || '0'); }
+
+  function render(){
+    var now = new Date();
+    var f = now.toLocaleDateString('es-MX');
+    var h = now.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+    wa.innerHTML =
+      '🚨 <b>REPORTE MODULAR — ' + esc(el.fTurno.value.toUpperCase()) + '</b> 🚨\n' +
+      '<b>Fecha:</b> ' + f + ' — ' + h + '\n\n' +
+      '———\n<b>🏭 ESTADO GLOBAL</b>\n' +
+      '<b>👥 Personal presente:</b> ' + v('fPers') + ' personas.\n' +
+      '<b>⬆️ ASR ocupación global:</b> <span class="bar10">' + bar(v('fOcc')) + '</span>\n' +
+      '<b>📦 Totes vacíos:</b> ' + v('fTot') + ' unidades.\n\n' +
+      '———\n<b>🔩 MOLDEO</b>\n' +
+      '<b>Máquinas trabajando:</b> ' + v('mMaq') + '\n' +
+      '<b>Totes para ASR (Lt22):</b> ' + v('mLt22') + '\n' +
+      '<b>Totes rechazos pallet:</b> ' + v('mRech') + '\n\n' +
+      '———\n<b>⚙️ ENSAMBLE (ASY)</b>\n' +
+      '<b>Máquinas trabajando:</b> ' + v('aMaq') + '\n' +
+      '<b>Totes ASR para ASY (Lt22):</b> ' + v('aLt22') + '\n' +
+      '<b>Totes acumulados (ASY RET):</b> ' + v('aRet') + '\n\n' +
+      '———\n<b>⚠️ PENDIENTES Y TRASPASO</b>\n' +
+      '<b>Resumen:</b> ' + esc(el.fTrasp.value.trim() || 'Sin resumen de traspaso.') + '\n' +
+      '<b>Seguridad:</b> ' + esc(el.fSeg.value.trim() || 'Ninguna alerta de seguridad.');
+  }
+
+  ids.forEach(function(i){
+    el[i].addEventListener('input', render);
+    el[i].addEventListener('change', render);
+  });
+  render();
+})();
+</script>
+</body>
+</html>

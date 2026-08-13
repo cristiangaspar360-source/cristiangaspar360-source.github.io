@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Identificación de sellos con peso alto — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Control de piso que detecta los sellos por encima de 15 kg para identificarlos y evitar que ingresen al ASR, antes de que el rack los rechace o se detenga la entrada." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--signal)}
+  .thr{display:grid;gap:16px;grid-template-columns:1fr;align-items:center}
+  @media(min-width:780px){.thr{grid-template-columns:1fr 340px}}
+  .thr .tlab{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:12px}
+  .thr input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;background:linear-gradient(90deg,var(--ok) 0 55%,var(--warn) 55% 75%,var(--risk) 75% 100%);outline:none;cursor:pointer}
+  .thr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--text);border:3px solid var(--ink);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .thr input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--text);border:3px solid var(--ink)}
+  .limitbtn{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--risk);background:color-mix(in srgb,var(--risk) 12%,transparent);color:var(--risk);transition:background .2s,color .2s,transform .15s;margin-top:12px}
+  .limitbtn:hover{background:var(--risk);color:#0D1015}
+  .limitbtn:active{transform:scale(.97)}
+  .heat{display:inline-block;width:100%;padding:8px 11px;border-radius:5px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+  td.wcell{padding:3px 6px}
+  tr.blocked td{background:color-mix(in srgb,var(--risk) 11%,transparent)}
+  tr.blocked:hover td{background:color-mix(in srgb,var(--risk) 17%,transparent)}
+  tr.unmeasured td{background:color-mix(in srgb,var(--warn) 9%,transparent)}
+  .verdict{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 9px;border-radius:5px;white-space:nowrap;display:inline-block}
+  .v-block{color:var(--risk);border:1px solid color-mix(in srgb,var(--risk) 34%,transparent);background:color-mix(in srgb,var(--risk) 10%,transparent)}
+  .v-ok{color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent)}
+  .v-unk{color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 34%,transparent);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+  .destbars{display:flex;flex-direction:column;gap:9px}
+  .drow{display:grid;grid-template-columns:132px 1fr 74px;gap:13px;align-items:center}
+  .drow .dl{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.05em}
+  .drow .dt{height:20px;background:var(--ink-3);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .drow .df{height:100%;background:var(--dc,var(--accent));width:0;transition:width .7s var(--ease)}
+  .drow .dv{font-family:var(--font-mono);font-size:.76rem;text-align:right;font-variant-numeric:tabular-nums}
+  @media(max-width:560px){.drow{grid-template-columns:1fr 62px;grid-template-areas:"l v" "t t";row-gap:5px}.drow .dl{grid-area:l}.drow .dv{grid-area:v}.drow .dt{grid-area:t}}
+  .gate{display:grid;gap:11px;grid-template-columns:1fr}
+  @media(min-width:720px){.gate{grid-template-columns:repeat(3,1fr)}}
+  .gcard{background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:18px 17px;border-top:3px solid var(--gc,var(--accent))}
+  .gcard .gn{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gc,var(--accent));margin-bottom:10px}
+  .gcard .gt{font-family:var(--font-display);font-weight:700;font-size:1rem;letter-spacing:-.012em;line-height:1.3;margin-bottom:8px}
+  .gcard .gd{font-size:.86rem;color:var(--muted);line-height:1.5}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">06 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Control de piso · Prevención</span>
+      <span class="mono">Molex · Apoyo a materialistas</span>
+    </div>
+    <h1 class="ptitle">Identificación de sellos con peso alto</h1>
+    <p class="thesis">El ASR no admite cualquier carga: por encima de <b>15 kg</b> el sello no debe entrar. El problema era que ese dato estaba enterrado en un listado ordenado por número de parte, así que el peso <b>se descubría en la banda</b> — cuando el rack ya había rechazado el tote y la entrada estaba detenida. Este control invierte el orden: identifica los sellos pesados <b>antes</b> de que lleguen al punto de ingreso.</p>
+    <div class="rail rv">
+      <div><div class="rl">Límite</div><div class="rvl">15 kg por sello</div></div>
+      <div><div class="rl">Momento</div><div class="rvl">Antes del ingreso al ASR</div></div>
+      <div><div class="rl">Origen</div><div class="rvl">SAP · material y lote</div></div>
+      <div><div class="rl">Usuario</div><div class="rvl">Materialista en piso</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Detectar antes, no rechazar después</h2></div>
+    <div class="prose rv" style="margin-bottom:26px">
+      <p>Un sello por encima del límite que llega al ASR no se convierte en un problema de peso: se convierte en <b>un rechazo, un tote detenido y una entrada bloqueada</b> mientras alguien lo diagnostica. El costo no está en el kilo de más; está en los minutos que la línea de entrada deja de fluir.</p>
+      <p>La información para evitarlo ya existía en SAP —material, lote, cantidad, peso y destino—, pero llegaba en un listado plano donde <b>todos los renglones se ven igual de importantes</b>. Ordenar por peso, pintar con formato condicional y marcar el corte de 15 kg convirtió ese listado en una decisión de dos segundos.</p>
+    </div>
+    <div class="gate rv">
+      <div class="gcard" style="--gc:var(--risk)">
+        <div class="gn">Antes</div>
+        <div class="gt">El peso se descubría en la banda</div>
+        <div class="gd">El sello viajaba hasta el punto de ingreso, el ASR lo rechazaba y había que sacarlo, diagnosticarlo y reubicarlo con la entrada detenida.</div>
+      </div>
+      <div class="gcard" style="--gc:var(--accent)">
+        <div class="gn">El control</div>
+        <div class="gt">Se identifica en el listado</div>
+        <div class="gd">Los sellos por encima de 15 kg quedan marcados en rojo y separados por destino, antes de que nadie los mueva.</div>
+      </div>
+      <div class="gcard" style="--gc:var(--ok)">
+        <div class="gn">Después</div>
+        <div class="gt">No entran al ASR</div>
+        <div class="gd">Se desvían a manejo manual desde el origen. El rack sólo recibe lo que puede recibir.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>El control</h2></div>
+    <p class="sec-note rv">El corte operativo es <b>15 kg</b>. Muévelo para ver cuántos sellos quedan de cada lado — y por qué un límite mal puesto deja pasar exactamente lo que se quería frenar.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div><div class="pt-name">Sellos por peso registrado</div><div class="pt-sub">Ordenado descendente · formato condicional</div></div>
+        <span class="badge live"><span class="bdot"></span>Interactivo</span>
+      </div>
+      <div class="panel-body">
+        <div class="thr" style="margin-bottom:20px">
+          <div>
+            <label class="tlab" for="thr">Límite de peso para ingresar al ASR</label>
+            <input type="range" id="thr" min="5" max="20" step="0.5" value="15">
+            <div style="display:flex;justify-content:space-between;margin-top:8px" class="mono"><span style="font-size:.55rem">5 kg</span><span style="font-size:.55rem">20 kg</span></div>
+            <button class="limitbtn" id="reset">Volver al límite real · 15 kg</button>
+          </div>
+          <div class="kgrid">
+            <div class="kbox"><div class="kl">Límite</div><div class="kv" style="color:var(--accent)"><span id="thrV">15.0</span><small> kg</small></div></div>
+            <div class="kbox is-risk"><div class="kl">No entran</div><div class="kv" id="cnt">0</div><div class="kn">Sellos por encima del límite.</div></div>
+            <div class="kbox is-ok"><div class="kl">Liberados</div><div class="kv" id="okc">0</div><div class="kn">Con peso dentro del rango.</div></div>
+          </div>
+        </div>
+
+        <div class="scrollx">
+          <table class="dt" style="min-width:700px" id="tbl">
+            <thead><tr>
+              <th>Material</th><th>Lote</th><th>Descripción</th>
+              <th class="r">Cantidad</th><th>Fecha</th><th class="r" style="width:92px">Peso (kg)</th><th>Destino</th><th>Ingreso</th>
+            </tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Extracto del listado · la escala de color es la del formato condicional original</div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>El agujero del filtro</h2></div>
+    <div class="panel rv">
+      <div class="panel-body">
+        <div class="kgrid" style="margin-bottom:20px">
+          <div class="kbox"><div class="kl">Registros</div><div class="kv" id="kTot">0</div></div>
+          <div class="kbox is-ok"><div class="kl">Con peso</div><div class="kv" id="kCon">0</div></div>
+          <div class="kbox is-risk"><div class="kl">Sin peso</div><div class="kv" id="kSin">0</div></div>
+          <div class="kbox is-risk"><div class="kl">Cobertura</div><div class="kv" id="kPct">0<small>%</small></div><div class="kn">Del listado que el filtro puede evaluar.</div></div>
+        </div>
+        <div class="alert">
+          <b>Un sello sin peso capturado no es un sello ligero: es un sello que nadie midió.</b> Y hoy pasa el filtro, porque un campo vacío no supera ningún límite. Más de un tercio del listado está en esa condición — es decir, el control que existe para frenar lo pesado <b>no puede opinar sobre uno de cada tres sellos</b>. Cerrar la captura del peso no es un detalle de calidad de datos: es la condición para que el filtro sirva de algo.
+        </div>
+        <p class="note" style="margin-top:20px">Lo señalo porque es el hallazgo que no venía en el encargo. El control se pidió para identificar los pesados; al construirlo quedó a la vista que <b>el dato con el que se decide está incompleto</b>, y eso vale más que la lista.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">04</span><h2>Dónde está el peso, por destino</h2></div>
+    <p class="sec-note rv">La segunda lectura del mismo listado: no basta saber que hay sellos pesados si no se sabe <b>hacia dónde iban</b>. Cada destino tiene un dueño y una ruta distinta.</p>
+    <div class="panel rv">
+      <div class="panel-body">
+        <div class="destbars" id="dests"></div>
+        <p class="note" style="margin-top:22px">Los sellos más pesados —los tres que superan el límite— están concentrados en <b>CTEMP</b>. Que el material más cargado esté en una ubicación temporal, y por tanto más cerca de entrar al ASR por inercia, es justo el escenario que el control existe para interceptar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">05</span><h2>Qué habilita</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Evitar el rechazo en lugar de resolverlo.</b> Un sello pesado interceptado en el listado no detiene la entrada; el mismo sello descubierto en la banda, sí.</span></li>
+      <li><span class="tk">→</span><span><b>Decidir sin abrir SAP.</b> El materialista mira el color, ve el veredicto y actúa. No hay consulta intermedia.</span></li>
+      <li><span class="tk">→</span><span><b>Asignar responsable por destino.</b> CTEMP, FIJA, Daifuku y OPCENTE tienen dueños distintos; segmentar evita que el listado sea de todos y de nadie.</span></li>
+      <li><span class="tk">→</span><span><b>Convertir un campo vacío en una tarea.</b> El peso sin capturar deja de ser invisible y pasa a tener nombre y dueño.</span></li>
+      <li><span class="tk">→</span><span><b>Complementa la herramienta de rechazos.</b> Una resuelve el tote que el ASR ya rechazó; ésta evita que llegue a rechazarse. Juntas cubren el antes y el después del mismo punto de ingreso.</span></li>
+    </ul>
+
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-line" href="rechazos-asr.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 10l7-7 7 7"/></svg>
+        Ver el árbol de rechazos
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">Excel</span><span class="tag hl">SAP</span><span class="tag hl">Formato condicional</span>
+      <span class="tag">Prevención</span><span class="tag">Calidad de datos</span><span class="tag">Control de lotes</span><span class="tag">ASR</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="rechazos-asr.html"><span class="pl">Proyecto anterior</span><span class="pt">Resolución e ingreso de totes rechazados</span></a>
+      <a href="reportes-turno.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Reportes Operativos por Turno</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 06 · Control de piso</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var LIMITE = 15;   // kg — el corte operativo para ingresar al ASR
+
+  // Extracto del listado, ordenado por peso descendente.
+  var R = [
+    ['335621807','G3P0013641','MX150 Mat…','20 000','12/04/2024',16.4,'CTEMP'],
+    ['335131802','G3P0011092','MX150 Mat…','17 000','12/07/2024',15.9,'CTEMP'],
+    ['345701911','G3P0008997','MX123 Gr…','4 000','24/05/2024',15.2,'CTEMP'],
+    ['335621407','G3P0012371','MX150 Mat…','30 000','12/04/2024',14.6,'CTEMP'],
+    ['335131602','G3P0009831','MX150 Mat…','20 000','12/09/2024',13.9,'CTEMP'],
+    ['335132602','G3P0009884','MX150 Mat…','8 000','12/03/2024',13.5,'CTEMP'],
+    ['335652602','G3P0012886','MX150 Mat…','10 000','12/09/2024',13.1,'CTEMP'],
+    ['335622613','G3P0010942','MX150 Mat…','10 000','12/05/2024',12.8,'CTEMP'],
+    ['342531002','G3P0012355','—','30 000','01/05/2024',12.8,'FIJA'],
+    ['335132202','G3P0013861','MX150 Mat…','10 000','12/01/2024',12.4,'CTEMP'],
+    ['345622212','G3P0013912','—','12 000','01/05/2024',12.1,'FIJA'],
+    ['335621607','G3P0014327','MX150 Mat…','20 000','12/04/2024',11.9,'CTEMP'],
+    ['335152602','G3P0013872','—','10 000','01/05/2024',11.7,'FIJA'],
+    ['335131402','G3P0012424','MX150 Mat…','20 000','12/05/2024',9.4,'DAIFUKU'],
+    ['335221402','G3P0011276','MX150 Perf…','20 000','12/09/2024',9.3,'DAIFUKU'],
+    ['314123501','G3P0012047','MX64 Perf…','50 000','12/09/2024',9.1,'OPCENTE'],
+    ['314124501','G3P0012358','MX64 Perf…','40 000','12/03/2024',8.7,'OPCENTE'],
+    ['330195020','G3P0005048','Fuel Inj…','30 000','12/03/2024',8.2,'OPCENTE'],
+    ['345791001','G3P0013667','MX123 Ring…','7 000','27/11/2024',7.8,'DAIFUKU'],
+    ['335221602','G3P0010533','MX150 Perf…','20 000','29/11/2024',7.1,'DAIFUKU'],
+    ['335221803','G3P0010556','—','30 000','01/05/2024',6.1,'DAIFUKU'],
+    ['345831202','860998671','MX123 Sl…','2 292','21/11/2024',5.7,'DAIFUKU'],
+    ['345841002','861241446','MX123 Gr…','420','—',2.7,'DAIFUKU'],
+    ['335262601','G3P0013837','MX150 Perf…','8 000','12/06/2024',0,'DAIFUKU'],
+    ['330192021','G3P0012983','Fuel Inj…','30 000','12/06/2024',0,'OPCENTE'],
+    ['335101401','G3P0011462','MX150 Mat…','4 061','24/11/2024',0,'DAIFUKU'],
+    ['314123401','G3P0013644','MX64 Fem…','100 000','12/09/2024',0,'OPCENTE'],
+    ['314124401','G3P0012191','MX64 Fem…','80 000','12/04/2024',0,'OPCENTE'],
+    ['347705401','G3P0012082','MX150 Perf…','20 000','12/04/2024',0,'DAIFUKU'],
+    ['335623002','G3P0010943','MX150 Mat…','8 000','28/11/2024',0,'DAIFUKU'],
+    ['345801211','G3P0010574','MX123 Gr…','3 500','05/08/2024',0,'DAIFUKU'],
+    ['335222601','G3P0011273','MX150 Perf…','10 000','31/10/2024',0,'DAIFUKU'],
+    ['345691001','G3P0009198','MX123 Ring…','6 000','21/05/2024',0,'DAIFUKU'],
+    ['345831102','850756371','MX123 Sl…','4 537','—',0,'DAIFUKU'],
+    ['345701211','3000299846','MX123 Gr…','7 000','17/07/2024',null,'—'],
+    ['345801111','G3P0010334','—','3 500','01/05/2024',null,'—']
+  ];
+
+  var MAXW = 16.4;
+  var tbody = document.getElementById('tbody');
+  var thr = document.getElementById('thr');
+  var thrV = document.getElementById('thrV');
+  var cnt = document.getElementById('cnt'), okc = document.getElementById('okc');
+
+  function heatStyle(w){
+    if (!w) return 'background:transparent;color:var(--muted)';
+    var k = w / MAXW;
+    return 'background:color-mix(in srgb, var(--risk) ' + (8 + k*48).toFixed(0) + '%, transparent);color:var(--text)';
+  }
+
+  tbody.innerHTML = R.map(function(r){
+    var w = r[5];
+    var label = w === null ? '—' : (w === 0 ? '0' : w.toLocaleString('es-MX',{maximumFractionDigits:3}));
+    return '<tr data-w="' + (w === null ? -1 : w) + '">' +
+      '<td class="n">' + r[0] + '</td>' +
+      '<td class="n" style="color:var(--muted)">' + r[1] + '</td>' +
+      '<td>' + r[2] + '</td>' +
+      '<td class="r n">' + r[3] + '</td>' +
+      '<td class="n" style="color:var(--muted)">' + r[4] + '</td>' +
+      '<td class="wcell"><span class="heat" style="' + heatStyle(w) + '">' + label + '</span></td>' +
+      '<td><span class="chip">' + r[6] + '</span></td>' +
+      '<td class="verdictcell"></td>' +
+    '</tr>';
+  }).join('');
+
+  var trs = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+
+  function applyThreshold(){
+    var t = parseFloat(thr.value);
+    thrV.textContent = t.toFixed(1);
+    var bloq = 0, libres = 0;
+    trs.forEach(function(tr){
+      var w = parseFloat(tr.dataset.w);
+      var cell = tr.querySelector('.verdictcell');
+      tr.classList.remove('blocked','unmeasured');
+      if (w <= 0){
+        // Peso vacío o en cero: en ambos casos nadie lo midió, así que el
+        // filtro no puede opinar — y hoy el sello pasa igual.
+        tr.classList.add('unmeasured');
+        cell.innerHTML = '<span class="verdict v-unk">Sin medir</span>';
+      } else if (w > t){
+        tr.classList.add('blocked');
+        cell.innerHTML = '<span class="verdict v-block">No entra</span>';
+        bloq++;
+      } else {
+        cell.innerHTML = '<span class="verdict v-ok">Liberado</span>';
+        libres++;
+      }
+    });
+    cnt.textContent = bloq;
+    okc.textContent = libres;
+  }
+  thr.addEventListener('input', applyThreshold);
+  document.getElementById('reset').addEventListener('click', function(){
+    thr.value = LIMITE; applyThreshold();
+  });
+  applyThreshold();
+
+  /* ---- Peso por destino ---- */
+  var COLORS = {CTEMP:'var(--risk)', FIJA:'var(--crit)', DAIFUKU:'var(--accent)', OPCENTE:'var(--c-bi)'};
+  var byDest = {};
+  R.forEach(function(r){ if (!r[5]) return; byDest[r[6]] = (byDest[r[6]] || 0) + r[5]; });
+  var pairs = Object.keys(byDest).map(function(k){ return [k, byDest[k]]; }).sort(function(a,b){ return b[1]-a[1]; });
+  var top = pairs[0][1];
+  document.getElementById('dests').innerHTML = pairs.map(function(p){
+    return '<div class="drow"><span class="dl">' + p[0] + '</span>' +
+      '<span class="dt"><span class="df" data-w="' + (p[1]/top*100).toFixed(1) + '" style="--dc:' + (COLORS[p[0]]||'var(--accent)') + '"></span></span>' +
+      '<span class="dv">' + p[1].toLocaleString('es-MX',{maximumFractionDigits:1}) + ' kg</span></div>';
+  }).join('');
+
+  /* ---- Cobertura del dato ---- */
+  var total = R.length;
+  var con = R.filter(function(r){ return r[5] > 0; }).length;
+  document.getElementById('kTot').textContent = total;
+  document.getElementById('kCon').textContent = con;
+  document.getElementById('kSin').textContent = total - con;
+  document.getElementById('kPct').innerHTML = Math.round(con/total*100) + '<small>%</small>';
+
+  function growDest(){
+    document.querySelectorAll('#dests .df').forEach(function(f){ f.style.width = f.dataset.w + '%'; });
+  }
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ growDest(); io.unobserve(e.target); } });
+    }, {threshold:.3});
+    io.observe(document.getElementById('dests'));
+  } else { growDest(); }
+})();
+</script>
+</body>
+</html>

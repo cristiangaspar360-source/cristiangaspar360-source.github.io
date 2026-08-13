@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Validador de Reempaque · Plan del planner vs. historial SAP</title>
+<meta name="description" content="Prototipo funcional: pega el plan del planner y el historial de SAP, y obtén avance, faltante y prioridad por número de parte." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-sap)}
+  body{padding-bottom:40px}
+  .tool-head{padding:34px 0 26px;border-bottom:1px solid var(--line);margin-bottom:28px}
+  .tool-head h1{font-family:var(--font-display);font-weight:800;font-size:clamp(1.5rem,3.4vw,2.1rem);letter-spacing:-.028em;line-height:1.1;margin:14px 0 12px}
+  .tool-head p{color:var(--muted);max-width:66ch;font-size:.98rem}
+  .io{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:820px){.io{grid-template-columns:1fr 1fr}}
+  .box{background:var(--ink-2);border:1px solid var(--line);border-radius:13px;overflow:hidden;display:flex;flex-direction:column}
+  .box .bh{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--ink-3);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .box .bt2{font-family:var(--font-display);font-weight:700;font-size:.9rem;letter-spacing:-.01em}
+  .box .bs{font-family:var(--font-mono);font-size:.53rem;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  textarea{width:100%;min-height:190px;resize:vertical;background:var(--ink);border:none;border-radius:0;padding:14px 16px;color:var(--text);font-family:var(--font-mono);font-size:.78rem;line-height:1.7;outline:none;tab-size:12}
+  [data-theme="light"] textarea{background:#fff}
+  textarea:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+  .bar2{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 26px}
+  .b2{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;padding:11px 18px;border-radius:9px;cursor:pointer;transition:transform .16s var(--ease),background .2s,color .2s,border-color .2s;border:1px solid var(--line-2);background:transparent;color:var(--text)}
+  .b2:hover{transform:translateY(-2px);border-color:var(--accent);color:var(--accent)}
+  .b2.pri{background:var(--accent);border-color:var(--accent);color:#0D1015}
+  .b2.pri:hover{color:#0D1015;box-shadow:0 12px 24px -14px var(--accent)}
+  .b2:active{transform:scale(.98)}
+  .err{color:var(--risk);font-size:.85rem;margin-left:auto}
+  .donut2{position:relative;width:150px;height:150px;flex-shrink:0}
+  .donut2 svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .donut2 .dc2{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .donut2 .dv2{font-family:var(--font-display);font-weight:900;font-size:1.9rem;line-height:1;letter-spacing:-.04em;color:var(--accent)}
+  .donut2 .dl2{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:7px}
+  .summary{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .summary .sk{flex:1;min-width:230px}
+  .miss{color:var(--risk);font-weight:600}
+  .over{color:var(--ok);font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="../proyectos/validacion-reempaque.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Volver al proyecto
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">Prototipo</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tool-head">
+    <span class="badge"><span class="bdot"></span>Prototipo funcional</span>
+    <h1>Validador de Reempaque</h1>
+    <p>Pega el <b>plan del planner</b> y el <b>historial de movimientos de SAP</b>. La herramienta los cruza por número de parte y calcula avance, faltante y prioridad — la misma lógica del sistema real, sin depender de nada externo. Todo corre en tu navegador; nada se envía a ningún lado.</p>
+  </div>
+
+  <div class="io">
+    <div class="box">
+      <div class="bh"><div><div class="bt2">1 · Plan del planner</div><div class="bs">Número de parte · solicitud · descripción (opcional)</div></div></div>
+      <textarea id="inPlan" spellcheck="false" aria-label="Plan del planner"></textarea>
+    </div>
+    <div class="box">
+      <div class="bh"><div><div class="bt2">2 · Historial de SAP</div><div class="bs">Número de parte · cantidad entregada · una línea por movimiento</div></div></div>
+      <textarea id="inSap" spellcheck="false" aria-label="Historial de SAP"></textarea>
+    </div>
+  </div>
+
+  <div class="bar2">
+    <button class="b2 pri" id="btnVal">Validar</button>
+    <button class="b2" id="btnEj">Cargar ejemplo W37</button>
+    <button class="b2" id="btnClr">Limpiar</button>
+    <button class="b2" id="btnCopy">Copiar resultado</button>
+    <span class="err" id="err"></span>
+  </div>
+
+  <div class="panel" id="res" hidden>
+    <div class="panel-top">
+      <div><div class="pt-name">Resultado de la validación</div><div class="pt-sub" id="resSub">—</div></div>
+      <span class="chip" id="resChip">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="summary" style="margin-bottom:22px">
+        <div class="donut2">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="78" fill="none" stroke="var(--ink-3)" stroke-width="26"/>
+            <circle id="dArc2" cx="100" cy="100" r="78" fill="none" stroke="var(--accent)" stroke-width="26"
+                    stroke-dasharray="490.1" stroke-dashoffset="490.1"
+                    style="transition:stroke-dashoffset .7s cubic-bezier(0.22,1,0.36,1)"/>
+          </svg>
+          <div class="dc2"><div class="dv2"><span id="pAva">0</span><span style="font-size:.42em;font-weight:700">%</span></div><div class="dl2">Avance</div></div>
+        </div>
+        <div class="sk">
+          <div class="kgrid">
+            <div class="kbox"><div class="kl">Solicitado</div><div class="kv" id="kS">0</div></div>
+            <div class="kbox is-ok"><div class="kl">Avance</div><div class="kv" id="kA">0</div></div>
+            <div class="kbox is-risk"><div class="kl">Faltante</div><div class="kv" id="kF">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scrollx">
+        <table class="dt" style="min-width:640px" id="out">
+          <thead><tr>
+            <th>Número de parte</th><th>Descripción</th>
+            <th class="r">Solicitud</th><th class="r">Avance</th><th class="r">Faltante</th><th class="r">%</th><th>Estado</th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+      <p class="note" style="margin-top:20px" id="insight"></p>
+    </div>
+    <div class="panel-foot"><span class="fdot"></span>Los números de parte que aparecen en SAP pero no en el plan se marcan como «fuera de plan»</div>
+  </div>
+
+  <div class="callout rv" style="margin-top:26px">
+    <b>Formato aceptado.</b> Una línea por registro, separando columnas con <b>tabulador, coma o punto y coma</b>. En el plan: <span class="mono" style="font-size:.72rem;color:var(--text)">parte · solicitud · descripción</span>. En SAP: <span class="mono" style="font-size:.72rem;color:var(--text)">parte · cantidad</span>. Puedes pegar directo desde Excel — las líneas de encabezado se ignoran solas.
+  </div>
+</div>
+
+<footer class="pf">
+  <div class="wrap">
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Prototipo del <a href="../proyectos/validacion-reempaque.html" style="color:var(--accent)">sistema de validación de reempaque</a></span>
+      <span class="fm">Corre 100 % en el navegador</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var EJ_PLAN = [
+    '345651005\t630\tMX123 Wire Dress Cover 64/72/80 CKT',
+    '345752005\t585\tMX123 Wire Dress Cover 48/56 CKT',
+    '349513001\t88\tMX150 2x12 Rcpt Backshell Blk w/ Rib',
+    '981923001\t108\tMOX Rcpt Hsg 0.64S w TPA PA6 Blk DR 3Ckt'
+  ].join('\n');
+
+  // Movimientos que suman el avance de la semana 37 por número de parte
+  // (664 · 6 · 87 · 114 = 871 cajas), igual que en la página del proyecto.
+  var EJ_SAP = [
+    '345651005\t109', '345651005\t192', '345651005\t101', '345651005\t262',
+    '345752005\t6',
+    '349513001\t84', '349513001\t3',
+    '981923001\t22', '981923001\t25', '981923001\t23', '981923001\t41',
+    '981923001\t2',  '981923001\t1'
+  ].join('\n');
+
+  var $ = function(id){ return document.getElementById(id); };
+  var inPlan = $('inPlan'), inSap = $('inSap'), err = $('err'), res = $('res');
+  var C = 2 * Math.PI * 78;
+  var fmt = function(n){ return Math.round(n).toLocaleString('es-MX').replace(/,/g,' '); };
+  var esc = function(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  };
+
+  function split(line){
+    return line.split(/\t|;|,(?=\s*[^\s])/).map(function(s){ return s.trim(); });
+  }
+  function toNum(s){
+    if (s === undefined || s === null) return NaN;
+    var c = String(s).replace(/\s/g,'').replace(/ /g,'').replace(/,/g,'');
+    return parseFloat(c);
+  }
+
+  function parsePlan(text){
+    var out = [];
+    text.split(/\r?\n/).forEach(function(line){
+      if (!line.trim()) return;
+      var p = split(line);
+      var qty = toNum(p[1]);
+      if (!p[0] || isNaN(qty)) return;           // encabezados y basura se caen solos
+      out.push({ np: p[0], sol: qty, desc: p.slice(2).join(' ').trim() });
+    });
+    return out;
+  }
+
+  function parseSap(text){
+    var map = {};
+    text.split(/\r?\n/).forEach(function(line){
+      if (!line.trim()) return;
+      var p = split(line);
+      var qty = toNum(p[1]);
+      if (!p[0] || isNaN(qty)) return;
+      map[p[0]] = (map[p[0]] || 0) + qty;
+    });
+    return map;
+  }
+
+  function validate(){
+    err.textContent = '';
+    var plan = parsePlan(inPlan.value);
+    var sap  = parseSap(inSap.value);
+
+    if (!plan.length){
+      err.textContent = 'No encontré ninguna línea de plan válida.';
+      res.hidden = true;
+      return;
+    }
+
+    var rows = plan.map(function(p){
+      var ava = sap[p.np] || 0;
+      delete sap[p.np];
+      return { np:p.np, desc:p.desc || '—', sol:p.sol, ava:ava, fal:p.sol - ava, extra:false };
+    });
+    // Lo que SAP entregó y no estaba en el plan
+    Object.keys(sap).forEach(function(np){
+      rows.push({ np:np, desc:'Fuera de plan', sol:0, ava:sap[np], fal:-sap[np], extra:true });
+    });
+
+    var tS = 0, tA = 0, tF = 0;
+    rows.forEach(function(r){ tS += r.sol; tA += r.ava; tF += r.fal; });
+    var pct = tS ? (tA / tS * 100) : 0;
+
+    var tbody = document.querySelector('#out tbody');
+    tbody.innerHTML = rows.map(function(r){
+      var p = r.sol ? (r.ava / r.sol * 100) : 0;
+      var estado, color;
+      if (r.extra)          { estado = 'Fuera de plan'; color = 'var(--c-bi)'; }
+      else if (r.fal <= 0)  { estado = 'Superado';      color = 'var(--ok)'; }
+      else if (p >= 95)     { estado = 'Al día';        color = 'var(--ok)'; }
+      else if (p >= 50)     { estado = 'En riesgo';     color = 'var(--warn)'; }
+      else                  { estado = 'Crítico';       color = 'var(--risk)'; }
+      return '<tr>' +
+        '<td class="n">' + esc(r.np) + '</td>' +
+        '<td>' + esc(r.desc) + '</td>' +
+        '<td class="r n">' + fmt(r.sol) + '</td>' +
+        '<td class="r n">' + fmt(r.ava) + '</td>' +
+        '<td class="r n ' + (r.fal > 0 ? 'neg' : 'pos') + '">' + (r.fal > 0 ? '' : '−') + fmt(Math.abs(r.fal)) + '</td>' +
+        '<td class="r n">' + (r.sol ? p.toFixed(0) + ' %' : '—') + '</td>' +
+        '<td><span class="chip" style="color:' + color + ';border-color:color-mix(in srgb,' + color + ' 32%,transparent)">' + estado + '</span></td>' +
+      '</tr>';
+    }).join('');
+
+    document.querySelector('#out tfoot').innerHTML =
+      '<tr><td colspan="2">Total</td><td class="r">' + fmt(tS) + '</td><td class="r">' + fmt(tA) +
+      '</td><td class="r">' + (tF > 0 ? '' : '−') + fmt(Math.abs(tF)) + '</td><td class="r">' + pct.toFixed(0) + ' %</td><td></td></tr>';
+
+    $('kS').textContent = fmt(tS);
+    $('kA').textContent = fmt(tA);
+    $('kF').textContent = (tF > 0 ? '' : '−') + fmt(Math.abs(tF));
+    $('pAva').textContent = pct.toFixed(0);
+    $('dArc2').style.strokeDashoffset = (C * (1 - Math.min(pct,100)/100)).toFixed(1);
+    $('resSub').textContent = rows.length + (rows.length === 1 ? ' número de parte' : ' números de parte') + ' validados contra SAP';
+
+    var criticos = rows.filter(function(r){ return !r.extra && r.sol && (r.ava / r.sol) < 0.5; });
+    $('resChip').textContent = criticos.length ? criticos.length + ' en riesgo' : 'Sin líneas críticas';
+    $('resChip').style.color = criticos.length ? 'var(--risk)' : 'var(--ok)';
+
+    if (criticos.length){
+      var peor = criticos.sort(function(a,b){ return b.fal - a.fal; })[0];
+      // La brecha se mide sobre lo que falta, no sobre el neto: las líneas
+      // que entregaron de más no compensan a las que no entregaron.
+      var brecha = rows.reduce(function(s, r){ return s + Math.max(r.fal, 0); }, 0) || 1;
+      $('insight').innerHTML = 'La línea que más arrastra el plan es <b>' + esc(peor.np) + '</b>, con <b>' +
+        fmt(peor.fal) + '</b> de faltante — el <b>' + Math.round(peor.fal / brecha * 100) +
+        ' %</b> de toda la brecha. Ahí es donde hay que preguntar por qué antes de pedir más esfuerzo al turno.';
+    } else {
+      $('insight').innerHTML = 'Ninguna línea está por debajo del 50 % del plan. El avance está repartido: si falta cerrar, es cuestión de ritmo, no de un bloqueo puntual.';
+    }
+
+    res.hidden = false;
+  }
+
+  $('btnVal').addEventListener('click', validate);
+  $('btnEj').addEventListener('click', function(){
+    inPlan.value = EJ_PLAN; inSap.value = EJ_SAP; validate();
+    res.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  $('btnClr').addEventListener('click', function(){
+    inPlan.value = ''; inSap.value = ''; res.hidden = true; err.textContent = '';
+  });
+  $('btnCopy').addEventListener('click', function(){
+    if (res.hidden){ err.textContent = 'Primero valida algo.'; return; }
+    var lines = ['Parte\tDescripción\tSolicitud\tAvance\tFaltante\t%'];
+    document.querySelectorAll('#out tbody tr').forEach(function(tr){
+      lines.push(Array.prototype.slice.call(tr.children, 0, 6)
+        .map(function(td){ return td.textContent.trim(); }).join('\t'));
+    });
+    var text = lines.join('\n');
+    var done = function(){ err.style.color = 'var(--ok)'; err.textContent = 'Copiado.'; setTimeout(function(){ err.textContent=''; err.style.color=''; }, 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else fallback();
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch(e){ err.textContent = 'No se pudo copiar.'; }
+      document.body.removeChild(ta);
+    }
+  });
+
+  // Arranca con el ejemplo cargado
+  inPlan.value = EJ_PLAN; inSap.value = EJ_SAP; validate();
+})();
+</script>
+</body>
+</html>

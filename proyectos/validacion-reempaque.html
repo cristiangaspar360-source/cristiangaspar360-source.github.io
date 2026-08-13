@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Validación y Seguimiento de Reempaque mediante Historial SAP — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Cruza el plan del planner contra el historial real de SAP para detectar faltantes y brechas del reempaque en tiempo real, sin depender de lo que cada turno reporta." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-sap)}
+  .adv{display:grid;gap:22px;grid-template-columns:1fr;align-items:center}
+  @media(min-width:780px){.adv{grid-template-columns:215px 1fr}}
+  .donut{position:relative;width:200px;height:200px;margin-inline:auto}
+  .donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .donut .dc{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .donut .dv{font-family:var(--font-display);font-weight:900;font-size:2.6rem;line-height:1;letter-spacing:-.04em;color:var(--accent)}
+  .donut .dl{font-family:var(--font-mono);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:9px}
+  .toggle{display:flex;align-items:center;gap:11px;background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;user-select:none;transition:border-color .2s}
+  [data-theme="light"] .toggle{background:var(--ink-3)}
+  .toggle:hover{border-color:var(--line-2)}
+  .toggle input{position:absolute;opacity:0;pointer-events:none}
+  .toggle .sw{width:36px;height:20px;border-radius:11px;background:var(--ink-3);border:1px solid var(--line-2);position:relative;flex-shrink:0;transition:background .25s var(--ease)}
+  .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:transform .25s var(--ease),background .25s}
+  .toggle input:checked + .sw{background:color-mix(in srgb,var(--accent) 30%,transparent);border-color:var(--accent)}
+  .toggle input:checked + .sw::after{transform:translateX(16px);background:var(--accent)}
+  .toggle .tl{font-size:.87rem;line-height:1.4}
+  .toggle .tl small{display:block;color:var(--muted);font-size:.77rem;margin-top:2px}
+  /* Barras por día */
+  .days{display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:20px}
+  .day{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;cursor:default}
+  .day .dbar{width:100%;background:var(--accent);opacity:.75;border-radius:4px 4px 0 0;transform-origin:bottom;transform:scaleY(0);transition:transform .6s var(--ease),opacity .2s}
+  .days.in .day .dbar{transform:scaleY(1)}
+  .day:hover .dbar{opacity:1}
+  .day .dn{font-family:var(--font-mono);font-size:.62rem;font-weight:600;position:absolute;top:-2px;left:50%;transform:translate(-50%,-100%);opacity:0;transition:opacity .2s}
+  .day:hover .dn{opacity:1}
+  .daylabels{display:flex;gap:8px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .daylabels span{flex:1;text-align:center;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  tr.blocked td{background:color-mix(in srgb,var(--risk) 8%,transparent)}
+  tr.blocked:hover td{background:color-mix(in srgb,var(--risk) 13%,transparent)}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">04 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Validación · SAP</span>
+      <span class="mono">Molex · Plan de reempaque</span>
+    </div>
+    <h1 class="ptitle">Validación y Seguimiento de Reempaque mediante Historial SAP</h1>
+    <p class="thesis">El planner entrega un número; el turno reporta otro. Este sistema no le cree a ninguno de los dos: cruza el plan contra el <b>historial real de movimientos en SAP</b> y calcula el avance solo. Lo importante no es el porcentaje — es que señala <b>qué línea está frenando la semana y por qué</b>, mientras todavía se puede hacer algo.</p>
+    <div class="rail rv">
+      <div><div class="rl">Contra qué valida</div><div class="rvl">Historial SAP</div></div>
+      <div><div class="rl">Corte mostrado</div><div class="rvl">Semana 37</div></div>
+      <div><div class="rl">Salida</div><div class="rvl">Avance · faltante · prioridad</div></div>
+      <div><div class="rl">Motor</div><div class="rvl">SAP Scripting · VBA · Power Query</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>El problema: nadie sabía cuánto faltaba de verdad</h2></div>
+    <div class="prose rv">
+      <p>El reempaque libera capacidad del ASR, así que su avance decide si el rack respira o se satura. Pero el avance se reportaba <b>a mano y por turno</b>: cada relevo sumaba lo suyo, nadie reconciliaba contra el sistema y las diferencias se acumulaban en silencio hasta que el planner descubría —al cierre— que la semana no había cerrado.</p>
+      <p>La pregunta operativa no era «¿cuánto llevamos?» sino <b>«¿en qué número de parte se está atorando el plan?»</b>. Con un total agregado, esa pregunta no tiene respuesta.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>Cómo valida</h2></div>
+    <div class="flow rv">
+      <div class="fstep" style="--fc:var(--c-gestion)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4H9zM7 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg></div>
+        <div class="fn">01</div><div class="ft">Plan del planner</div>
+        <div class="fd">Cantidad solicitada por número de parte para la semana.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--c-sap)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <div class="fn">02</div><div class="ft">Historial SAP</div>
+        <div class="fd">Movimientos reales del periodo, extraídos por script.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--ok)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h6M4 12h6M4 17h6M15 9l2 2 4-4"/></svg></div>
+        <div class="fn">03</div><div class="ft">Cruce en Power Query</div>
+        <div class="fd">Por número de parte: solicitado vs. entregado vs. faltante.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--signal)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></div>
+        <div class="fn">04</div><div class="ft">Panel de avance</div>
+        <div class="fd">Avance del plan, entregas por día y prioridades del turno.</div>
+      </div>
+    </div>
+    <p class="note rv" style="margin-top:24px">La regla que lo hace confiable: <b>el avance no se captura, se deriva</b>. Nadie puede reportar de más ni de menos porque nadie lo teclea.</p>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>El panel de avance</h2></div>
+    <p class="sec-note rv">Corte real de la <b>semana 37</b>. Activa el interruptor para ver el hallazgo que este sistema existe para producir.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div><div class="pt-name">Avance del plan de reempaque</div><div class="pt-sub">Semana 37 · 4 números de parte</div></div>
+        <span class="badge live"><span class="bdot"></span>Interactivo</span>
+      </div>
+      <div class="panel-body">
+        <div class="adv">
+          <div class="donut">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <circle cx="100" cy="100" r="78" fill="none" stroke="var(--ink-3)" stroke-width="24"/>
+              <circle id="dArc" cx="100" cy="100" r="78" fill="none" stroke="var(--accent)" stroke-width="24"
+                      stroke-dasharray="490.1" stroke-dashoffset="490.1" stroke-linecap="butt"
+                      style="transition:stroke-dashoffset .7s cubic-bezier(0.22,1,0.36,1)"/>
+            </svg>
+            <div class="dc"><div class="dv"><span id="dPct">0</span><span style="font-size:.42em;font-weight:700">%</span></div><div class="dl">Avance</div></div>
+          </div>
+          <div>
+            <div class="kgrid" style="margin-bottom:12px">
+              <div class="kbox"><div class="kl">Solicitado</div><div class="kv" id="kSol">1 411</div><div class="kn">Cajas del plan de la semana.</div></div>
+              <div class="kbox is-ok"><div class="kl">Avance</div><div class="kv" id="kAva">871</div><div class="kn">Confirmado contra historial SAP.</div></div>
+              <div class="kbox is-risk"><div class="kl">Faltante</div><div class="kv" id="kFal">540</div><div class="kn">Brecha viva del plan.</div></div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="tgl">
+              <span class="sw"></span>
+              <span class="tl">Excluir la línea bloqueada por falta de material
+                <small id="tglNote">MX123 Wire Dress Cover 48/56 CKT — marcada «Sin material»</small>
+              </span>
+            </label>
+            <div class="alert" id="insight" style="margin-top:12px">
+              <b>Un número de parte arrastra la semana.</b> <span id="insightTxt">De las cuatro líneas del plan, tres están prácticamente cerradas. La cuarta no arrancó porque no hubo material — y ella sola explica el faltante.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>El porcentaje se calcula de la tabla de abajo, no se captura</div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="panel rv" style="margin-top:14px">
+      <div class="panel-top"><div><div class="pt-name">Detalle por número de parte</div><div class="pt-sub">Plan vs. historial · semana 37</div></div><span class="chip">Fuente del cálculo</span></div>
+      <div class="panel-body scrollx" style="padding-top:6px">
+        <table class="dt" style="min-width:700px" id="tbl">
+          <thead><tr>
+            <th>Número de parte</th><th>Descripción</th><th class="r">SPQ</th>
+            <th class="r">Solicitud</th><th class="r">Avance</th><th class="r">Faltante</th><th>Estado</th>
+          </tr></thead>
+          <tbody>
+            <tr data-sol="630" data-ava="664" data-fal="-34">
+              <td class="n">345651005</td><td>MX123 Wire Dress Cover 64/72/80 CKT</td><td class="r n">210</td>
+              <td class="r n">630</td><td class="r n">664</td><td class="r n pos">−34</td><td><span class="chip" style="color:var(--ok);border-color:color-mix(in srgb,var(--ok) 32%,transparent)">Superado</span></td>
+            </tr>
+            <tr class="blocked" data-sol="585" data-ava="6" data-fal="579" data-blocked="1">
+              <td class="n">345752005</td><td>MX123 Wire Dress Cover 48/56 CKT</td><td class="r n">275</td>
+              <td class="r n">585</td><td class="r n">6</td><td class="r n neg">579</td><td><span class="chip" style="color:var(--risk);border-color:color-mix(in srgb,var(--risk) 32%,transparent)">Sin material</span></td>
+            </tr>
+            <tr data-sol="88" data-ava="87" data-fal="1">
+              <td class="n">349513001</td><td>MX150 2×12 Rcpt Backshell Blk w/ Rib</td><td class="r n">165</td>
+              <td class="r n">88</td><td class="r n">87</td><td class="r n">1</td><td><span class="chip" style="color:var(--ok);border-color:color-mix(in srgb,var(--ok) 32%,transparent)">Al día</span></td>
+            </tr>
+            <tr data-sol="108" data-ava="114" data-fal="-6">
+              <td class="n">981923001</td><td>MOX Rcpt Hsg 0.64S w TPA PA6 Blk DR 3Ckt</td><td class="r n">2 510</td>
+              <td class="r n">108</td><td class="r n">114</td><td class="r n pos">−6</td><td><span class="chip" style="color:var(--ok);border-color:color-mix(in srgb,var(--ok) 32%,transparent)">Superado</span></td>
+            </tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">Total</td><td class="r" id="tSol">1 411</td><td class="r" id="tAva">871</td><td class="r" id="tFal">540</td><td></td></tr></tfoot>
+        </table>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Un faltante negativo significa que se entregó por encima de lo solicitado</div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">04</span><h2>Entregas por día</h2></div>
+    <p class="sec-note rv">La misma validación, vista en el tiempo. Sirve para distinguir un plan que va lento de un plan que va a golpes — que se atienden distinto.</p>
+    <div class="panel rv">
+      <div class="panel-top"><div><div class="pt-name">Entregado a SSHIP</div><div class="pt-sub">Semana 37 · 1 004 cajas en siete días</div></div></div>
+      <div class="panel-body">
+        <div class="days" id="days">
+          <div class="day" data-v="26"><span class="dn">26</span><span class="dbar" style="height:10%"></span></div>
+          <div class="day" data-v="21"><span class="dn">21</span><span class="dbar" style="height:8%"></span></div>
+          <div class="day" data-v="128"><span class="dn">128</span><span class="dbar" style="height:49%"></span></div>
+          <div class="day" data-v="235"><span class="dn">235</span><span class="dbar" style="height:91%"></span></div>
+          <div class="day" data-v="181"><span class="dn">181</span><span class="dbar" style="height:70%"></span></div>
+          <div class="day" data-v="259"><span class="dn">259</span><span class="dbar" style="height:100%"></span></div>
+          <div class="day" data-v="154"><span class="dn">154</span><span class="dbar" style="height:59%"></span></div>
+        </div>
+        <div class="daylabels"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+        <p class="note" style="margin-top:20px">Los dos primeros días concentran <b>47 cajas de 1 004</b>. El plan no arrancó despacio: arrancó parado. Ver eso el martes —y no el domingo— es toda la diferencia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">05</span><h2>Qué habilita</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Separar «no se hizo» de «no se pudo».</b> Una línea sin material no es un problema de desempeño del turno, y el panel lo distingue solo.</span></li>
+      <li><span class="tk">→</span><span><b>Reasignar el esfuerzo del turno.</b> Si tres líneas ya están cerradas, insistir en ellas no libera una sola localidad más.</span></li>
+      <li><span class="tk">→</span><span><b>Escalar el abasto con evidencia.</b> «Faltan 579 cajas por falta de material desde el lunes» es un dato accionable; «vamos atrasados» no lo es.</span></li>
+      <li><span class="tk">→</span><span><b>Cerrar el ciclo con el ASR.</b> El reempaque es lo que libera capacidad — este avance alimenta la lectura del <a href="dashboard-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">Dashboard de Capacidad</a>.</span></li>
+    </ul>
+
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="../herramientas/validacion-reempaque.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
+        Probar el validador
+      </a>
+      <a class="btn btn-line" href="https://docs.google.com/document/d/1M74WJqfgel9K3znb7oqjKSdOJuYDe7K7cClj_OPBaE0/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">SAP Scripting</span><span class="tag hl">Power Query</span><span class="tag hl">Excel VBA</span>
+      <span class="tag">Historial de movimientos</span><span class="tag">Plan vs. real</span><span class="tag">SSHIP</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="junta-arranque.html"><span class="pl">Proyecto anterior</span><span class="pt">Automatización de la Junta de Arranque</span></a>
+      <a href="rechazos-asr.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Resolución e ingreso de totes rechazados</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 04 · Validación</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var C = 2 * Math.PI * 78;
+  var arc = document.getElementById('dArc');
+  var pct = document.getElementById('dPct');
+  var tgl = document.getElementById('tgl');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#tbl tbody tr'));
+  var kSol=document.getElementById('kSol'), kAva=document.getElementById('kAva'), kFal=document.getElementById('kFal');
+  var tSol=document.getElementById('tSol'), tAva=document.getElementById('tAva'), tFal=document.getElementById('tFal');
+  var ins = document.getElementById('insightTxt');
+  var box = document.getElementById('insight');
+  var fmt = function(n){ return Math.round(n).toLocaleString('es-MX').replace(/,/g,' '); };
+
+  function render(){
+    var skip = tgl.checked;
+    var sol=0, ava=0, fal=0;
+    rows.forEach(function(r){
+      var isB = r.dataset.blocked === '1';
+      r.style.display = (skip && isB) ? 'none' : '';
+      if (skip && isB) return;
+      sol += +r.dataset.sol; ava += +r.dataset.ava; fal += +r.dataset.fal;
+    });
+    var p = sol ? (ava / sol * 100) : 0;
+    var shown = Math.min(p, 100);
+    arc.style.strokeDashoffset = (C * (1 - shown/100)).toFixed(1);
+    pct.textContent = p.toFixed(0);
+    var falTxt = (fal < 0 ? '−' : '') + fmt(Math.abs(fal));   // signo tipográfico, como en la tabla
+    kSol.textContent = fmt(sol); kAva.textContent = fmt(ava); kFal.textContent = falTxt;
+    tSol.textContent = fmt(sol); tAva.textContent = fmt(ava); tFal.textContent = falTxt;
+    kFal.parentElement.className = 'kbox ' + (fal > 0 ? 'is-risk' : 'is-ok');
+
+    if (skip){
+      arc.setAttribute('stroke','var(--ok)');
+      pct.parentElement.style.color = 'var(--ok)';
+      box.style.background  = 'color-mix(in srgb, var(--ok) 11%, transparent)';
+      box.style.borderColor = 'color-mix(in srgb, var(--ok) 30%, transparent)';
+      box.querySelector('b').style.color = 'var(--ok)';
+      box.querySelector('b').textContent = 'Sin esa línea, el plan está cumplido.';
+      ins.textContent = 'Las otras tres líneas entregaron 865 de 826 cajas solicitadas: 105 % del plan. El equipo hizo su trabajo; lo que faltó fue material.';
+    } else {
+      arc.setAttribute('stroke','var(--accent)');
+      pct.parentElement.style.color = 'var(--accent)';
+      box.style.background  = 'color-mix(in srgb, var(--risk) 11%, transparent)';
+      box.style.borderColor = 'color-mix(in srgb, var(--risk) 30%, transparent)';
+      box.querySelector('b').style.color = 'var(--risk)';
+      box.querySelector('b').textContent = 'Un número de parte arrastra la semana.';
+      ins.textContent = 'De las cuatro líneas del plan, tres están cerradas o superadas. La cuarta no arrancó porque no hubo material — y ella sola concentra 579 de las 580 cajas que realmente faltan.';
+    }
+  }
+
+  tgl.addEventListener('change', render);
+  render();
+
+  if ('IntersectionObserver' in window){
+    var d = document.getElementById('days');
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, {threshold:.35});
+    io.observe(d);
+    var g = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ render(); g.unobserve(e.target); } });
+    }, {threshold:.4});
+    g.observe(document.querySelector('.donut'));
+  } else {
+    document.getElementById('days').classList.add('in');
+  }
+})();
+</script>
+</body>
+</html>

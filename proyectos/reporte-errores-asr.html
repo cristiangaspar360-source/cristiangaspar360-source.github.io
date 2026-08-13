@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reporte de Errores ASR · ZMM400 → Power BI — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Extracción de alertas del ASR desde la transacción ZMM400 de SAP, traducción de códigos a errores con nombre en Power Query y tablero de aumento y disminución por turno publicado en Teams." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-bi)}
+  /* Consola de extracción */
+  .console{display:grid;gap:12px;grid-template-columns:1fr}
+  @media(min-width:820px){.console{grid-template-columns:260px 1fr}}
+  .cpanel{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:15px}
+  [data-theme="light"] .cpanel{background:var(--ink-3)}
+  .cpanel .ch{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .cpanel .ch .cnum{width:17px;height:17px;border-radius:5px;background:var(--accent);color:#0D1015;display:grid;place-items:center;font-weight:700;font-size:.58rem}
+  .fld{margin-bottom:9px}
+  .fld span{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+  .fld input{width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font-mono);font-size:.76rem;outline:none;transition:border-color .2s}
+  .fld input:focus{border-color:var(--accent)}
+  .cbtn{width:100%;margin-top:9px;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;font-weight:600;padding:9px;border-radius:8px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);cursor:pointer;transition:background .2s,color .2s,transform .15s}
+  .cbtn:hover{background:var(--accent);color:#0D1015}
+  .cbtn:active{transform:scale(.97)}
+  .cbtn[disabled]{opacity:.55;cursor:progress}
+  .log{font-family:var(--font-mono);font-size:.68rem;line-height:1.75;background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:14px 15px;min-height:132px;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+  [data-theme="light"] .log{background:#0D1015;color:#8A93A2}
+  .log .ok{color:var(--ok)} .log .hl{color:var(--accent)} .log .wr{color:var(--warn)}
+  /* Delta */
+  .delta{font-family:var(--font-mono);font-weight:600;font-size:.8rem;white-space:nowrap}
+  .delta.down{color:var(--ok)} .delta.up{color:var(--risk)}
+  .spark{display:flex;align-items:flex-end;gap:3px;height:26px}
+  .spark i{flex:1;background:var(--accent);opacity:.45;border-radius:2px 2px 0 0;min-height:2px}
+  .spark i.last{opacity:1}
+  /* Tarjeta de Teams */
+  .teams{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:780px){.teams{grid-template-columns:1.15fr 1fr}}
+  .tchat{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .tbar{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line);background:var(--ink-3)}
+  .tbar .tav{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#4B53BC,#7B83EB);display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:.66rem;color:#fff}
+  .tbar .tn{font-weight:600;font-size:.84rem}
+  .tbar .ts{font-family:var(--font-mono);font-size:.53rem;letter-spacing:.1em;color:var(--muted);margin-top:1px}
+  .tbody{padding:15px}
+  .tcard{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--ink)}
+  [data-theme="light"] .tcard{background:var(--ink-3)}
+  .tcard .tch{padding:10px 13px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .tcard .tcb{padding:14px 13px}
+  .tbig{font-family:var(--font-display);font-weight:900;font-size:2.5rem;line-height:1;letter-spacing:-.04em;color:var(--ok)}
+  .tsub{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.45}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">02 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Análisis · Power BI</span>
+      <span class="mono">Molex · Daifuku Materiales</span>
+    </div>
+    <h1 class="ptitle">Reporte de Errores ASR: de código de SAP a causa raíz</h1>
+    <p class="thesis">La transacción <code class="k">ZMM400</code> registraba cada alerta del ASR como un <b>código</b>. El dato existía y nadie podía leerlo. Construí la cadena completa: un script de SAP lanzado desde Excel que baja el log, un catálogo en Power Query que traduce cada código a un <b>error con nombre</b>, y un tablero de aumento y disminución por turno que vive <b>dentro del Teams de los supervisores de Daifuku</b>, donde se toman las decisiones.</p>
+    <div class="rail rv">
+      <div><div class="rl">Origen</div><div class="rvl">SAP · ZMM400</div></div>
+      <div><div class="rl">Traducción</div><div class="rvl">Power Query</div></div>
+      <div><div class="rl">Publicación</div><div class="rvl">Power BI en Teams</div></div>
+      <div><div class="rl">Corte analizado</div><div class="rvl">557 eventos · W48–W49</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Un registro que nadie podía leer</h2></div>
+    <div class="prose rv">
+      <p>El ASR no falla en silencio: cada rechazo y cada error queda registrado. El problema era el formato. <code class="k">ZMM400</code> devuelve <b>códigos de estado</b>, no frases. Un supervisor que abre la transacción a media noche ve una lista de identificadores y no puede responder la única pregunta que importa: <b>¿qué está fallando más y por qué?</b></p>
+      <p>Sin traducción no hay agregación. Sin agregación no hay Pareto. Sin Pareto, cada turno atacaba el error que tenía enfrente en vez del que más pesaba — y así, la misma falla podía repetirse doscientas veces sin que nadie lo notara.</p>
+    </div>
+    <div class="callout rv" style="margin-top:22px">
+      <b>El proyecto no fue «hacer una gráfica».</b> Fue construir el diccionario que convierte un log de máquina en un lenguaje que la operación ya usa — y después automatizar todo lo que hay entre la transacción y la pantalla del supervisor.
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>La cadena, de punta a punta</h2></div>
+    <p class="sec-note rv">Todo arranca desde el mismo archivo de Excel que ya usaba la operación. El usuario no aprende una herramienta nueva: aprieta un botón.</p>
+    <div class="flow rv">
+      <div class="fstep" style="--fc:var(--c-sap)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg></div>
+        <div class="fn">01</div><div class="ft">ZMM400</div>
+        <div class="fd">Log de alertas del ASR en SAP, codificado.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--c-auto)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/></svg></div>
+        <div class="fn">02</div><div class="ft">Script de SAP</div>
+        <div class="fd">Lanzado desde el Excel con rango de fechas. Baja el log crudo.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--ok)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v5H4zM4 13h7v7H4zM15 13h5v7h-5z"/></svg></div>
+        <div class="fn">03</div><div class="ft">Power Query</div>
+        <div class="fd">Cruza contra el catálogo: código → error con nombre. Tipa fecha, turno y semana.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--signal)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+        <div class="fn">04</div><div class="ft">Tabla dinámica</div>
+        <div class="fd">Semana × día × tipo de error, con filtros de la propia hoja.</div>
+      </div>
+      <div class="fstep" style="--fc:var(--c-bi)">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+        <div class="fn">05</div><div class="ft">Power BI en Teams</div>
+        <div class="fd">Tablero de aumento y disminución embebido en el grupo de supervisores.</div>
+      </div>
+    </div>
+    <p class="note rv" style="margin-top:24px">La misma descarga alimenta las dos salidas: el <b>reporte operativo por semana</b> que se revisa en junta y el <b>tablero de variación por turno</b> que vive en Teams. Una extracción, dos audiencias, cero doble captura.</p>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>La consola de extracción</h2></div>
+    <p class="sec-note rv">Recreación del panel de control del Excel. Los dos botones hacen cosas distintas: <b>Buscar</b> trae el log crudo desde SAP para un rango nuevo; <b>Reporte</b> reconstruye el análisis con lo ya descargado. Pruébalos.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div><div class="pt-name">Extracción de errores ASR</div><div class="pt-sub">Excel con macros · script de SAP GUI</div></div>
+        <span class="badge live"><span class="bdot"></span>Interactivo</span>
+      </div>
+      <div class="panel-body">
+        <div class="console">
+          <div>
+            <div class="cpanel">
+              <div class="ch"><span class="cnum">1</span>Buscar otras fechas</div>
+              <div class="fld"><span>Fecha inicio</span><input type="text" id="d1" value="20/12/2025"></div>
+              <div class="fld"><span>Fecha fin</span><input type="text" id="d2" value="24/12/2025"></div>
+              <button class="cbtn" id="btnBuscar">Buscar en SAP</button>
+            </div>
+            <div class="cpanel" style="margin-top:11px">
+              <div class="ch"><span class="cnum">2</span>Generar reporte</div>
+              <div class="fld"><span>Semana</span><input type="text" id="d3" value="W48 – W49"></div>
+              <button class="cbtn" id="btnReporte">Generar reporte</button>
+            </div>
+          </div>
+          <div>
+            <div class="log" id="log" aria-live="polite">&gt; Listo. Selecciona un rango y ejecuta la extracción.</div>
+            <div class="kgrid" style="margin-top:11px">
+              <div class="kbox"><div class="kl">Eventos leídos</div><div class="kv"><span id="mEv">557</span></div><div class="kn">Registros de ZMM400 en el rango.</div></div>
+              <div class="kbox"><div class="kl">Traducidos</div><div class="kv is-ok" id="mTr">7<small> tipos</small></div><div class="kn">Códigos con nombre en el catálogo.</div></div>
+              <div class="kbox"><div class="kl">Sin catalogar</div><div class="kv" id="mNc">0</div><div class="kn">Códigos nuevos que hay que dar de alta.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Los filtros de día y semana del original (W43…W49, domingo–viernes) se resuelven en la propia tabla dinámica</div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">04</span><h2>El diccionario: de evento a error con nombre</h2></div>
+    <p class="sec-note rv">Ésta es la pieza que hace posible todo lo demás. Cada condición registrada por el ASR se traduce a un error que la operación ya sabe nombrar — y a una acción concreta en piso.</p>
+    <div class="panel rv">
+      <div class="panel-top"><div><div class="pt-name">Catálogo de traducción</div><div class="pt-sub">Se resuelve en Power Query · 7 tipos activos</div></div><span class="chip">Referencia</span></div>
+      <div class="panel-body scrollx">
+        <table class="dt" style="min-width:660px">
+          <thead><tr><th style="width:26%">Error con nombre</th><th style="width:11%">Clase</th><th style="width:34%">Qué registró el ASR</th><th>Qué hace el materialista</th></tr></thead>
+          <tbody>
+            <tr><td><b>Ubicación inhabilitada</b></td><td><span class="chip">Error</span></td><td>El destino asignado en el rack no admite el tote.</td><td>Reasignar destino y reingresar; escalar si la localidad sigue bloqueada.</td></tr>
+            <tr><td><b>Orden afectada</b></td><td><span class="chip">Error</span></td><td>La orden asociada al movimiento quedó en un estado que impide completarlo.</td><td>Corregir la orden en SAP antes de volver a intentar el ingreso.</td></tr>
+            <tr><td><b>Sin expediente de recibo</b></td><td><span class="chip">Rechazo</span></td><td>El tote llega sin el documento de recibo que lo respalda.</td><td>Generar el expediente y reingresar el tote.</td></tr>
+            <tr><td><b>Tote con carga en pendiente en WRX</b></td><td><span class="chip">Rechazo</span></td><td>El sistema del ASR tiene una carga previa sin cerrar para ese tote.</td><td>Cerrar el pendiente en WRX y liberar el tote.</td></tr>
+            <tr><td><b>Tote duplicado en WRX</b></td><td><span class="chip">Rechazo</span></td><td>El identificador del tote ya existe activo en el sistema.</td><td>Depurar el duplicado y reetiquetar.</td></tr>
+            <tr><td><b>Código de barras ilegible</b></td><td><span class="chip">Rechazo</span></td><td>La lectura de la etiqueta falla en el punto de entrada.</td><td>Reimprimir la etiqueta y reingresar.</td></tr>
+            <tr><td><b>Carga desconocida</b></td><td><span class="chip">Rechazo</span></td><td>El ASR detecta un tote que no puede identificar contra ningún registro.</td><td>Identificar físicamente el material y darlo de alta antes del reingreso.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Un código que no está en el catálogo no se descarta: se marca como «sin catalogar» para darlo de alta</div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">05</span><h2>Dónde está el peso real</h2></div>
+    <p class="sec-note rv">Con la traducción hecha, el Pareto aparece solo. Cambia de corte para ver cómo se mueve la distribución entre semanas.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div><div class="pt-name">Errores por tipo</div><div class="pt-sub" id="paretoSub">Acumulado W48 + W49 · 557 eventos</div></div>
+        <div class="seg" id="segWeek">
+          <button data-v="tot" aria-pressed="true">Acumulado</button>
+          <button data-v="w48" aria-pressed="false">W48</button>
+          <button data-v="w49" aria-pressed="false">W49</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="bars" id="pareto"></div>
+        <p class="note" style="margin-top:22px" id="paretoNote"></p>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>Ambos cortes cubren los mismos dos días de la semana (domingo y lunes), así que la comparación es directa</div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">06</span><h2>El tablero de aumento y disminución</h2></div>
+    <p class="sec-note rv">La foto de una semana dice poco; lo que mueve a un supervisor es <b>la dirección</b>. Ese es el tablero que se embebió en el grupo de Teams de los supervisores de Daifuku (Materiales): la variación por tipo de error entre un corte y el anterior, sin salir de la conversación donde ya trabajan.</p>
+
+    <div class="teams rv">
+      <div class="tchat">
+        <div class="tbar">
+          <span class="tav">DM</span>
+          <span><span class="tn">Daifuku · Materiales</span><span class="ts">Supervisores · pestaña Power BI</span></span>
+        </div>
+        <div class="tbody">
+          <div class="tcard">
+            <div class="tch">Variación de errores ASR · W48 → W49</div>
+            <div class="tcb">
+              <div class="tbig">−72.0 %</div>
+              <div class="tsub">435 → 122 eventos. Los siete tipos bajan; ninguno sube.</div>
+              <div class="spark" style="margin-top:16px" aria-hidden="true">
+                <i style="height:100%"></i><i style="height:28%" class="last"></i>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px" class="mono"><span style="font-size:.53rem">W48 · 435</span><span style="font-size:.53rem">W49 · 122</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-top"><div><div class="pt-name">Detalle de la variación</div><div class="pt-sub">Por tipo de error</div></div></div>
+        <div class="panel-body scrollx" style="padding-top:6px">
+          <table class="dt" style="min-width:420px">
+            <thead><tr><th>Error</th><th class="r">W48</th><th class="r">W49</th><th class="r">Var.</th></tr></thead>
+            <tbody>
+              <tr><td>Ubicación inhabilitada</td><td class="r n">164</td><td class="r n">89</td><td class="r"><span class="delta down">−45.7 %</span></td></tr>
+              <tr><td>Orden afectada</td><td class="r n">88</td><td class="r n">4</td><td class="r"><span class="delta down">−95.5 %</span></td></tr>
+              <tr><td>Sin expediente de recibo</td><td class="r n">71</td><td class="r n">13</td><td class="r"><span class="delta down">−81.7 %</span></td></tr>
+              <tr><td>Tote con carga pendiente (WRX)</td><td class="r n">52</td><td class="r n">7</td><td class="r"><span class="delta down">−86.5 %</span></td></tr>
+              <tr><td>Tote duplicado en WRX</td><td class="r n">37</td><td class="r n">6</td><td class="r"><span class="delta down">−83.8 %</span></td></tr>
+              <tr><td>Código de barras ilegible</td><td class="r n">14</td><td class="r n">2</td><td class="r"><span class="delta down">−85.7 %</span></td></tr>
+              <tr><td>Carga desconocida</td><td class="r n">9</td><td class="r n">1</td><td class="r"><span class="delta down">−88.9 %</span></td></tr>
+            </tbody>
+            <tfoot><tr><td>Total</td><td class="r">435</td><td class="r">122</td><td class="r"><span class="delta down">−72.0 %</span></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rv" style="margin-top:22px">
+      <b>Lo que enseña este corte.</b> «Orden afectada» cae de 88 a 4 — se corrigió de raíz. «Ubicación inhabilitada» sólo baja a la mitad y pasa a concentrar <b>73 % de todo lo que queda</b>: dejó de ser un error entre siete para convertirse en <em>el</em> problema. Ese cambio de prioridad es exactamente lo que un promedio semanal escondía.
+    </div>
+
+    <div class="acts rv" style="margin-top:30px">
+      <a class="btn btn-solid" href="https://sites.google.com/view/cristiangaspar-portfolio/prototipos/power-bi-an%C3%A1lis-de-aumento-y-disminucion-de-errores-asr-por-turno" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
+        Abrir el tablero Power BI
+      </a>
+      <a class="btn btn-line" href="../herramientas/extraccion-errores.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17h16M4 12h16M4 7h16"/></svg>
+        Probar el traductor de errores
+      </a>
+      <a class="btn btn-line" href="https://docs.google.com/document/d/1I4C-o4ueeBSYpuMIwBOPlnUJSdJNeBdQnSu9xPTsE_U/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">SAP ZMM400</span><span class="tag hl">SAP Scripting</span><span class="tag hl">Power Query</span><span class="tag hl">Power BI</span>
+      <span class="tag">Excel VBA</span><span class="tag">Microsoft Teams</span><span class="tag">Análisis Pareto</span><span class="tag">WRX</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="dashboard-asr.html"><span class="pl">Proyecto anterior</span><span class="pt">Dashboard Inteligente de Capacidad ASR</span></a>
+      <a href="junta-arranque.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Automatización de la Junta de Arranque</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 02 · Análisis &amp; BI</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Pareto conmutable ---------- */
+  var ERRORS = [
+    {n:'Ubicación inhabilitada',            tot:253, w48:164, w49:89, c:'var(--risk)'},
+    {n:'Orden afectada',                    tot:92,  w48:88,  w49:4,  c:'var(--crit)'},
+    {n:'Sin expediente de recibo',          tot:84,  w48:71,  w49:13, c:'var(--crit)'},
+    {n:'Tote con carga pendiente (WRX)',    tot:59,  w48:52,  w49:7,  c:'var(--warn)'},
+    {n:'Tote duplicado en WRX',             tot:43,  w48:37,  w49:6,  c:'var(--warn)'},
+    {n:'Código de barras ilegible',         tot:16,  w48:14,  w49:2,  c:'var(--accent)'},
+    {n:'Carga desconocida',                 tot:10,  w48:9,   w49:1,  c:'var(--accent)'}
+  ];
+  var NOTES = {
+    tot:'Sobre el acumulado, <b>ubicación inhabilitada concentra casi la mitad</b> de todos los eventos. Es el modo de falla que justifica un proyecto propio; el resto, sumado, pesa menos.',
+    w48:'En la semana 48 el peso está repartido: cuatro tipos superan los 50 eventos. Es el retrato de una operación <b>sin una causa dominante</b> — y por eso difícil de priorizar sin el dato.',
+    w49:'En la semana 49 todo baja, pero <b>ubicación inhabilitada se lleva 73 % de lo que queda</b>. Bajar el total no cambió la prioridad: la concentró.'
+  };
+  var SUBS = {tot:'Acumulado W48 + W49 · 557 eventos', w48:'Semana 48 · 435 eventos', w49:'Semana 49 · 122 eventos'};
+
+  var host = document.getElementById('pareto');
+  var sub  = document.getElementById('paretoSub');
+  var note = document.getElementById('paretoNote');
+
+  function draw(key){
+    var rows = ERRORS.map(function(e){ return {n:e.n, v:e[key], c:e.c}; })
+                     .sort(function(a,b){ return b.v - a.v; });
+    var total = rows.reduce(function(s,r){ return s + r.v; }, 0);
+    var max = rows[0].v || 1;
+    host.innerHTML = rows.map(function(r){
+      var pc = total ? (r.v/total*100) : 0;
+      return '<div class="brow"><span class="bl">' + r.n + '</span>' +
+             '<span class="btrack"><span class="bfill" data-w="' + (r.v/max*100).toFixed(1) + '" style="--bc:' + r.c + '"></span></span>' +
+             '<span class="bv">' + r.v + '<span class="bpc">' + pc.toFixed(1) + ' %</span></span></div>';
+    }).join('');
+    sub.textContent = SUBS[key];
+    note.innerHTML  = NOTES[key];
+    requestAnimationFrame(function(){
+      if (window.cgaGrowBars) window.cgaGrowBars(host);
+      else host.querySelectorAll('.bfill').forEach(function(f){ f.style.width = f.dataset.w + '%'; });
+    });
+  }
+  document.getElementById('segWeek').addEventListener('segchange', function(ev){ draw(ev.detail.value); });
+  draw('tot');
+
+  /* ---------- Consola de extracción ---------- */
+  var log = document.getElementById('log');
+  var bB = document.getElementById('btnBuscar');
+  var bR = document.getElementById('btnReporte');
+  var mEv = document.getElementById('mEv'), mNc = document.getElementById('mNc');
+
+  function run(btn, steps, done){
+    if (btn.disabled) return;
+    [bB,bR].forEach(function(b){ b.disabled = true; });
+    log.innerHTML = '';
+    var i = 0;
+    (function next(){
+      if (i >= steps.length){
+        [bB,bR].forEach(function(b){ b.disabled = false; });
+        if (done) done();
+        return;
+      }
+      log.innerHTML += (i ? '\n' : '') + steps[i];
+      log.scrollTop = log.scrollHeight;
+      i++;
+      setTimeout(next, 340);
+    })();
+  }
+
+  bB.addEventListener('click', function(){
+    var a = document.getElementById('d1').value || '—', b = document.getElementById('d2').value || '—';
+    run(bB, [
+      '&gt; Abriendo conexión SAP GUI…',
+      '&gt; Transacción <span class="hl">ZMM400</span> · rango ' + a + ' → ' + b,
+      '&gt; Ejecutando script de extracción…',
+      '&gt; <span class="ok">624 registros</span> descargados a la hoja de datos crudos.',
+      '&gt; Listo. Ejecuta <span class="hl">Generar reporte</span> para traducir y agregar.'
+    ], function(){ mEv.textContent = '624'; mNc.textContent = '—'; });
+  });
+
+  bR.addEventListener('click', function(){
+    run(bR, [
+      '&gt; Actualizando consultas de Power Query…',
+      '&gt; Cruzando contra catálogo de errores…',
+      '&gt; <span class="ok">557 eventos traducidos</span> en 7 tipos conocidos.',
+      '&gt; <span class="wr">0 códigos sin catalogar.</span>',
+      '&gt; Tabla dinámica y tablero de variación actualizados.'
+    ], function(){ mEv.textContent = '557'; mNc.textContent = '0'; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Optimización de Solicitud de Totes en SAP — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Una sola orden de transporte para múltiples totes en lugar de una orden por tote: menos órdenes abiertas, menos saturación del ASR en picos de demanda." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-sap)}
+  .vs{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:760px){.vs{grid-template-columns:1fr 1fr}}
+  .vscol{border:1px solid var(--line);border-radius:14px;padding:19px;background:var(--ink-2)}
+  .vscol.old{border-color:color-mix(in srgb,var(--risk) 28%,transparent)}
+  .vscol.neu{border-color:color-mix(in srgb,var(--ok) 28%,transparent)}
+  .vscol .vh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .vscol .vt{font-family:var(--font-display);font-weight:700;font-size:1rem;letter-spacing:-.01em}
+  .vscol .vc{font-family:var(--font-display);font-weight:900;font-size:1.9rem;letter-spacing:-.035em;line-height:1}
+  .vscol.old .vc{color:var(--risk)} .vscol.neu .vc{color:var(--ok)}
+  .vscol .vcl{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);text-align:right;margin-top:4px}
+  .tos{display:flex;flex-wrap:wrap;gap:5px;min-height:74px;align-content:flex-start}
+  .to{width:20px;height:20px;border-radius:4px;background:color-mix(in srgb,var(--risk) 26%,transparent);border:1px solid color-mix(in srgb,var(--risk) 45%,transparent);animation:pop .28s var(--ease) both}
+  .to.big{width:100%;height:56px;border-radius:9px;background:color-mix(in srgb,var(--ok) 16%,transparent);border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);display:grid;place-content:center;text-align:center;font-family:var(--font-mono);font-size:.66rem;letter-spacing:.09em;color:var(--ok)}
+  @keyframes pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.to{animation:none}}
+  .ctl{display:flex;align-items:center;gap:15px;flex-wrap:wrap;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:16px}
+  [data-theme="light"] .ctl{background:var(--ink-3)}
+  .ctl label{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .ctl input{flex:1;min-width:150px;-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;background:var(--line-2);outline:none;cursor:pointer}
+  .ctl input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:3px solid var(--ink);cursor:grab}
+  .ctl input::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--ink)}
+  .ctl .cv{font-family:var(--font-display);font-weight:800;font-size:1.4rem;letter-spacing:-.03em;color:var(--accent);min-width:38px;text-align:right}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">09 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Proceso · SAP WM</span>
+      <span class="mono">Molex · Solicitud de material</span>
+    </div>
+    <h1 class="ptitle">Optimización de Solicitud de Totes en SAP</h1>
+    <p class="thesis">Cada tote solicitado generaba su propia orden de transporte. En un pico de demanda eso significa <b>decenas de órdenes abiertas simultáneas</b> compitiendo por el mismo rack — y un ASR que se satura por el modo en que se le pide, no por lo que se le pide. La técnica batch con <code class="k">LT01</code> agrupa la solicitud en <b>una sola TO</b>.</p>
+    <div class="rail rv">
+      <div><div class="rl">Transacción</div><div class="rvl">LT01</div></div>
+      <div><div class="rl">Cambio</div><div class="rvl">De N órdenes a 1</div></div>
+      <div><div class="rl">Tipo</div><div class="rvl">Mejora de proceso</div></div>
+      <div><div class="rl">Impacto</div><div class="rvl">Picos de demanda</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>El costo escondido de pedir de uno en uno</h2></div>
+    <div class="prose rv">
+      <p>Ninguna orden individual es un problema. El problema es <b>el conjunto</b>: cada TO abierta ocupa una posición en la cola del ASR, y el sistema atiende por orden de llegada sin saber que las treinta que acaba de recibir son en realidad una sola necesidad. El resultado es un rack ocupado resolviendo solicitudes fragmentadas mientras la operación espera.</p>
+      <p>Es un caso claro de algo que aprendí a buscar: <b>problemas que no están en el sistema sino en cómo lo usamos</b>. No hizo falta desarrollar nada — hizo falta cambiar la forma de pedir.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>Uno contra muchos</h2></div>
+    <p class="sec-note rv">Mueve el número de totes de la solicitud para ver cómo crece la cola en un caso y no en el otro.</p>
+    <div class="panel rv">
+      <div class="panel-top"><div><div class="pt-name">Órdenes de transporte generadas</div><div class="pt-sub">Solicitud individual vs. batch con LT01</div></div><span class="badge live"><span class="bdot"></span>Interactivo</span></div>
+      <div class="panel-body">
+        <div class="ctl">
+          <label for="nT">Totes en la solicitud</label>
+          <input type="range" id="nT" min="1" max="40" value="24">
+          <span class="cv" id="nV">24</span>
+        </div>
+        <div class="vs">
+          <div class="vscol old">
+            <div class="vh"><span class="vt">Solicitud individual</span><span><span class="vc" id="oldC">24</span><span class="vcl">TO abiertas</span></span></div>
+            <div class="tos" id="oldT"></div>
+          </div>
+          <div class="vscol neu">
+            <div class="vh"><span class="vt">Batch con LT01</span><span><span class="vc">1</span><span class="vcl">TO abierta</span></span></div>
+            <div class="tos"><div class="to big"><span id="bigLbl">1 TO · 24 totes</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>La cantidad de material solicitado es idéntica en ambos casos — sólo cambia cómo se le pide al sistema</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>Qué habilita</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>La cola del ASR deja de inflarse artificialmente.</b> Menos órdenes abiertas es menos ruido en el indicador de TO's del <a href="dashboard-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">dashboard de capacidad</a>.</span></li>
+      <li><span class="tk">→</span><span><b>La solicitud se rastrea como una unidad.</b> Si algo falla, falla una orden identificable, no treinta sueltas.</span></li>
+      <li><span class="tk">→</span><span><b>Se enseña en un turno.</b> No requiere desarrollo ni permisos nuevos: es una técnica, y por eso sobrevive a los cambios de personal.</span></li>
+    </ul>
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="https://docs.google.com/document/d/1v3eYe0eZMoUPS52x6gfjWDaeOvAAUULAeR5wV_y3HrA/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+    </div>
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">SAP LT01</span><span class="tag hl">SAP WM</span>
+      <span class="tag">Batch</span><span class="tag">Mejora de proceso</span><span class="tag">Capacitación</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="reporte-modular.html"><span class="pl">Proyecto anterior</span><span class="pt">Agente de Reporte Modular</span></a>
+      <a href="roles-operativos.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Sistema de Roles Operativos para Materialistas</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 09 · Proceso</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var r = document.getElementById('nT'), v = document.getElementById('nV');
+  var oc = document.getElementById('oldC'), ot = document.getElementById('oldT'), bl = document.getElementById('bigLbl');
+  function render(){
+    var n = +r.value;
+    v.textContent = n; oc.textContent = n;
+    bl.textContent = '1 TO · ' + n + (n === 1 ? ' tote' : ' totes');
+    var cur = ot.children.length;
+    if (n > cur){
+      var frag = document.createDocumentFragment();
+      for (var i = cur; i < n; i++){
+        var d = document.createElement('div');
+        d.className = 'to';
+        d.style.animationDelay = Math.min((i - cur) * 18, 400) + 'ms';
+        frag.appendChild(d);
+      }
+      ot.appendChild(frag);
+    } else {
+      while (ot.children.length > n) ot.removeChild(ot.lastChild);
+    }
+  }
+  r.addEventListener('input', render);
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Automatización de Reportes Operativos por Turno — Cristian Gaspar Aguayo</title>
+<meta name="description" content="El patrón SAP Scripting → Excel VBA → Power Query → PowerPoint generalizado a todo el reporteo del turno: consolidación de KPIs y presentaciones ejecutivas sin intervención manual." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-auto)}
+  .layers{display:grid;gap:10px}
+  .layer{display:grid;grid-template-columns:74px 1fr;gap:18px;align-items:center;background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:17px 19px;transition:transform .25s var(--ease),border-color .25s var(--ease)}
+  .layer:hover{transform:translateX(4px);border-color:var(--lc,var(--accent))}
+  .layer .lname{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.11em;text-transform:uppercase;color:var(--lc,var(--accent));text-align:right}
+  .layer .lt{font-family:var(--font-display);font-weight:700;font-size:1rem;letter-spacing:-.012em;line-height:1.3}
+  .layer .ld{font-size:.87rem;color:var(--muted);margin-top:6px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">07 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Automatización</span>
+      <span class="mono">Molex · Reporteo operativo</span>
+    </div>
+    <h1 class="ptitle">Automatización de Reportes Operativos por Turno</h1>
+    <p class="thesis">La <a href="junta-arranque.html" style="color:var(--accent);border-bottom:1px solid currentColor">junta de arranque</a> demostró que el patrón funcionaba. Este proyecto lo <b>generalizó al resto del reporteo</b>: una sola tubería —SAP Scripting → Excel VBA → Power Query → PowerPoint— que consolida los indicadores del turno y entrega presentaciones ejecutivas sin que nadie toque un dato.</p>
+    <div class="rail rv">
+      <div><div class="rl">Alcance</div><div class="rvl">Reporteo del turno completo</div></div>
+      <div><div class="rl">Tubería</div><div class="rvl">SAP → VBA → PQ → PPT</div></div>
+      <div><div class="rl">Intervención manual</div><div class="rvl">Ninguna</div></div>
+      <div><div class="rl">Relación</div><div class="rvl">Misma infraestructura que la junta</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Qué lo distingue de la junta de arranque</h2></div>
+    <div class="prose rv">
+      <p>Comparten tecnología, no propósito. La <b>junta de arranque</b> resuelve un entregable concreto: la presentación de relevo, con su contenido y su formato fijos, para una audiencia y un momento del día. Este proyecto resuelve <b>el problema de fondo</b>: cualquier reporte del turno debería poder armarse desde la misma fuente, con las mismas reglas de limpieza y el mismo formato de salida.</p>
+      <p>En la práctica eso significó separar la tubería del entregable: <b>una capa de extracción</b> reutilizable, <b>una capa de transformación</b> con las reglas de negocio, y <b>una capa de presentación</b> que se cambia sin tocar las otras dos. Cuando después llegaron el <a href="dashboard-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">dashboard de capacidad</a> y el <a href="reporte-errores-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">reporte de errores</a>, ya no hubo que construir la extracción otra vez.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>Las tres capas</h2></div>
+    <p class="sec-note rv">Es la decisión de diseño que hace que todo lo demás del portafolio exista. Sin ella, cada reporte habría sido un archivo aparte con su propia copia del mismo código.</p>
+    <div class="layers rv">
+      <div class="layer" style="--lc:var(--c-sap)">
+        <div class="lname">Extracción</div>
+        <div><div class="lt">SAP Scripting</div><div class="ld">Scripts parametrizados por fecha y turno que recorren las transacciones y exportan a CSV. Se escriben una vez y los reutiliza cualquier reporte.</div></div>
+      </div>
+      <div class="layer" style="--lc:var(--ok)">
+        <div class="lname">Transformación</div>
+        <div><div class="lt">Power Query + VBA</div><div class="ld">Tipado, cruces contra catálogos, cálculo de indicadores y reglas de negocio. Aquí vive la lógica; si cambia una regla, cambia en un solo lugar.</div></div>
+      </div>
+      <div class="layer" style="--lc:var(--c-auto)">
+        <div class="lname">Presentación</div>
+        <div><div class="lt">PowerPoint / Excel</div><div class="ld">La salida formateada. Cambiar la plantilla, agregar una lámina o cambiar de audiencia no obliga a tocar la extracción ni la transformación.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>Qué habilita</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Un reporte nuevo cuesta horas, no días.</b> La parte cara —conectarse a SAP y limpiar— ya está resuelta.</span></li>
+      <li><span class="tk">→</span><span><b>Los indicadores no se contradicen entre reportes.</b> Todos se calculan en la misma capa.</span></li>
+      <li><span class="tk">→</span><span><b>El mantenimiento es viable para una persona.</b> Es la condición para que algo así sobreviva en una operación real.</span></li>
+    </ul>
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="https://docs.google.com/document/d/1T1dCbvfXT3U4HvvZ3TS1n5J76nLg1rfRNo_k1T5tLfk/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+    </div>
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">SAP Scripting</span><span class="tag hl">Excel VBA</span><span class="tag hl">Power Query</span>
+      <span class="tag">PowerPoint</span><span class="tag">Arquitectura por capas</span><span class="tag">KPIs</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="sellos-peso-alto.html"><span class="pl">Proyecto anterior</span><span class="pt">Identificación de sellos con peso alto</span></a>
+      <a href="reporte-modular.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Agente de Reporte Modular</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 07 · Automatización</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+</body>
+</html>

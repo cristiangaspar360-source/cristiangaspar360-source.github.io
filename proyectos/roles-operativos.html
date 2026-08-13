@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sistema de Roles Operativos para Materialistas — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Cuatro zonas críticas con asignación rotativa por competencias: elimina la dependencia de personas específicas y garantiza cobertura completa del turno." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-gestion)}
+  .zones{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .zone{background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:17px 16px;border-top:3px solid var(--zc,var(--accent));transition:transform .25s var(--ease),border-color .25s var(--ease)}
+  .zone:hover{transform:translateY(-4px)}
+  .zone .zn{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--zc,var(--accent));margin-bottom:9px}
+  .zone .zt{font-family:var(--font-display);font-weight:700;font-size:1rem;letter-spacing:-.012em;line-height:1.28;margin-bottom:9px}
+  .zone .zd{font-size:.85rem;color:var(--muted);line-height:1.5}
+  .zone .zp{display:inline-flex;align-items:center;gap:7px;margin-top:13px;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--zc,var(--accent));border:1px solid color-mix(in srgb,var(--zc,var(--accent)) 30%,transparent);border-radius:6px;padding:4px 9px;transition:background .3s var(--ease)}
+  .zone.staffed .zp{background:color-mix(in srgb,var(--zc,var(--accent)) 14%,transparent)}
+  .rot{display:flex;align-items:center;gap:13px;flex-wrap:wrap;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:13px 16px;margin-bottom:16px}
+  [data-theme="light"] .rot{background:var(--ink-3)}
+  .rot button{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;font-weight:600;padding:9px 16px;border-radius:8px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent);cursor:pointer;transition:background .2s,color .2s,transform .15s}
+  .rot button:hover{background:var(--accent);color:#0D1015}
+  .rot button:active{transform:scale(.97)}
+  .rot .rl2{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.1em;color:var(--muted)}
+  .rot .rl2 b{color:var(--text);font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">10 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Gestión operativa</span>
+      <span class="mono">Molex · Equipo de materialistas</span>
+    </div>
+    <h1 class="ptitle">Sistema de Roles Operativos para Materialistas</h1>
+    <p class="thesis">El turno funcionaba porque ciertas personas sabían cosas que nadie más sabía. Eso no es un equipo: es <b>una cadena de puntos únicos de falla</b>, y se nota el día que uno falta. Definí cuatro zonas críticas con responsabilidades explícitas y una <b>rotación por competencias</b> que obliga a que todos pasen por todas.</p>
+    <div class="rail rv">
+      <div><div class="rl">Zonas</div><div class="rvl">4 críticas</div></div>
+      <div><div class="rl">Mecanismo</div><div class="rvl">Rotación por competencias</div></div>
+      <div><div class="rl">Equipo</div><div class="rvl">5 personas</div></div>
+      <div><div class="rl">Objetivo</div><div class="rvl">Cobertura total del turno</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>El problema no era de personas</h2></div>
+    <div class="prose rv">
+      <p>Nadie estaba haciendo mal su trabajo. El diseño era el problema: las tareas se habían repartido por costumbre, cada quien se especializó en lo suyo y la especialización —que parece buena— <b>convirtió a cada persona en el único camino</b> hacia una parte de la operación. Un permiso, una incapacidad o una renuncia bastaban para dejar una zona sin quien la atendiera.</p>
+      <p>Ninguna herramienta arregla eso. Es un problema de estructura, y se resuelve con estructura.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>Las cuatro zonas</h2></div>
+    <p class="sec-note rv">Cada zona tiene un alcance definido y un responsable por turno. Pulsa <b>Rotar</b> para ver el mecanismo: nadie repite zona, y en cuatro turnos todos pasaron por todas.</p>
+    <div class="panel rv">
+      <div class="panel-top"><div><div class="pt-name">Asignación por turno</div><div class="pt-sub">Rotación por competencias</div></div><span class="badge live"><span class="bdot"></span>Interactivo</span></div>
+      <div class="panel-body">
+        <div class="rot">
+          <button id="rotBtn">Rotar turno</button>
+          <span class="rl2">Turno <b id="tn">1</b> de 4 · cobertura <b id="cov">4/4</b> zonas</span>
+        </div>
+        <div class="zones" id="zones">
+          <div class="zone staffed" style="--zc:var(--c-sap)">
+            <div class="zn">Zona 01</div><div class="zt">Ingreso desde moldeo</div>
+            <div class="zd">Recepción de totes al ASR y atención de rechazos en el punto de entrada.</div>
+            <div class="zp"><span class="bdot" style="width:5px;height:5px;border-radius:50%;background:currentColor"></span><span class="who">Materialista A</span></div>
+          </div>
+          <div class="zone staffed" style="--zc:var(--c-auto)">
+            <div class="zn">Zona 02</div><div class="zt">Suministro a líneas</div>
+            <div class="zd">Surtido a ensamble bajo prioridades y control de acumulados en ASY RET.</div>
+            <div class="zp"><span class="bdot" style="width:5px;height:5px;border-radius:50%;background:currentColor"></span><span class="who">Materialista B</span></div>
+          </div>
+          <div class="zone staffed" style="--zc:var(--ok)">
+            <div class="zn">Zona 03</div><div class="zt">Totes vacíos y reempaque</div>
+            <div class="zd">Reposición de totes vacíos y avance del plan de reempaque del turno.</div>
+            <div class="zp"><span class="bdot" style="width:5px;height:5px;border-radius:50%;background:currentColor"></span><span class="who">Materialista C</span></div>
+          </div>
+          <div class="zone staffed" style="--zc:var(--c-bi)">
+            <div class="zn">Zona 04</div><div class="zt">Sistema e inventarios</div>
+            <div class="zd">TO's abiertas, transferencias en tránsito y corrección de errores en SAP.</div>
+            <div class="zp"><span class="bdot" style="width:5px;height:5px;border-radius:50%;background:currentColor"></span><span class="who">Materialista D</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-foot"><span class="fdot"></span>La quinta persona del equipo cubre relevos y comidas sin dejar zona descubierta</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>Qué habilita</h2></div>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Ninguna zona depende de una persona.</b> Un ausente ya no es un paro; es una reasignación.</span></li>
+      <li><span class="tk">→</span><span><b>La capacitación cruzada deja de ser un buen propósito.</b> Está incorporada al mecanismo: se aprende rotando, no en un curso.</span></li>
+      <li><span class="tk">→</span><span><b>Las herramientas tienen dueño.</b> El <a href="rechazos-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">árbol de rechazos</a> es de la zona 01; el <a href="validacion-reempaque.html" style="color:var(--accent);border-bottom:1px solid currentColor">avance de reempaque</a>, de la zona 03. Sin roles, una herramienta de todos es de nadie.</span></li>
+      <li><span class="tk">→</span><span><b>El desempeño se puede conversar.</b> Con alcance explícito por zona, la retroalimentación deja de ser sobre la persona y pasa a ser sobre el trabajo.</span></li>
+    </ul>
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="https://docs.google.com/document/d/11BILDeR0NpoA9VxPDKPPmWJDBxBQ-0i4EILuifo190o/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+    </div>
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">Diseño organizacional</span><span class="tag hl">Capacitación cruzada</span>
+      <span class="tag">Liderazgo de equipo</span><span class="tag">Metodología</span><span class="tag">Continuidad operativa</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="solicitud-totes.html"><span class="pl">Proyecto anterior</span><span class="pt">Optimización de Solicitud de Totes en SAP</span></a>
+      <a href="index.html" class="next"><span class="pl">Volver</span><span class="pt">Todos los proyectos</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 10 · Gestión</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var NAMES = ['Materialista A','Materialista B','Materialista C','Materialista D'];
+  var whos = Array.prototype.slice.call(document.querySelectorAll('.zone .who'));
+  var zones = Array.prototype.slice.call(document.querySelectorAll('.zone'));
+  var tn = document.getElementById('tn');
+  var turn = 0;
+
+  document.getElementById('rotBtn').addEventListener('click', function(){
+    turn = (turn + 1) % 4;
+    tn.textContent = turn + 1;
+    zones.forEach(function(z){ z.classList.remove('staffed'); });
+    whos.forEach(function(w, i){
+      w.textContent = NAMES[(i + turn) % 4];
+    });
+    // Re-aplica el resaltado con un cuadro de por medio, para que se note el cambio
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){ zones.forEach(function(z){ z.classList.add('staffed'); }); });
+    });
+  });
+})();
+</script>
+</body>
+</html>

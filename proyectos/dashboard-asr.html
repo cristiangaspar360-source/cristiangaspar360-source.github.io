@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Inteligente de Capacidad ASR — Cristian Gaspar Aguayo</title>
+<meta name="description" content="Un panel que responde en un vistazo si el ASR Daifuku Shuttle Rack M puede recibir lo que viene. Seis componentes, una sola fuente de datos y un botón que la actualiza desde SAP." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-dash)}
+  /* --- Medidor de capacidad --- */
+  .gauge-wrap{display:grid;gap:22px;align-items:center;grid-template-columns:1fr}
+  @media(min-width:760px){.gauge-wrap{grid-template-columns:250px 1fr}}
+  .gauge{position:relative;width:230px;height:230px;margin-inline:auto}
+  .gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .gauge .gc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:0 34px}
+  .gauge .gv{font-family:var(--font-display);font-weight:900;font-size:2.5rem;line-height:1;letter-spacing:-.04em}
+  .gauge .gs{font-family:var(--font-display);font-weight:700;font-size:.82rem;letter-spacing:-.005em;line-height:1.2;margin-top:9px}
+  .gauge .gl{font-family:var(--font-mono);font-size:.53rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  .ring-bg{stroke:var(--ink-3)}
+  /* --- Control de simulación --- */
+  .sim{background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:16px}
+  .sim label{font-family:var(--font-mono);font-size:.57rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:11px}
+  .sim input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;background:linear-gradient(90deg,var(--ok) 0 40%,var(--warn) 40% 62%,var(--crit) 62% 88%,var(--risk) 88% 100%);outline:none;cursor:pointer}
+  .sim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--text);border:3px solid var(--ink);cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .sim input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--text);border:3px solid var(--ink);cursor:grab}
+  .sim .simfoot{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.1em;color:var(--muted);margin-top:9px}
+  /* --- Escala de 4 niveles --- */
+  .scale{display:grid;gap:9px}
+  .lvl{display:grid;grid-template-columns:9px 1fr;gap:15px;padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--ink-2);transition:border-color .3s var(--ease),transform .3s var(--ease),background .3s}
+  .lvl .lbar{border-radius:5px;background:var(--lc)}
+  .lvl .lname{font-family:var(--font-display);font-weight:700;font-size:.98rem;letter-spacing:-.01em;color:var(--lc)}
+  .lvl .lrange{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.1em;color:var(--muted);margin:5px 0 8px}
+  .lvl .lact{font-size:.87rem;color:var(--muted);line-height:1.5}
+  .lvl .lconn{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.03em;line-height:1.5;color:var(--lc);margin-top:9px;padding-top:9px;border-top:1px dashed var(--line-2)}
+  .lvl.on{border-color:var(--lc);transform:translateX(4px);background:color-mix(in srgb,var(--lc) 7%,var(--ink-2))}
+  .lvl.on .lact{color:var(--text)}
+  /* --- Mini tabla de acumulados --- */
+  .stack{display:grid;gap:8px}
+  .srow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 12px;border-radius:9px;background:var(--ink);border:1px solid var(--line)}
+  [data-theme="light"] .srow{background:var(--ink-3)}
+  .srow .sp{font-family:var(--font-mono);font-size:.78rem}
+  .srow .sq{font-family:var(--font-display);font-weight:800;font-size:1.05rem;letter-spacing:-.02em}
+  .flowline{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px}
+  .fl-step{flex:1 0 168px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:15px 15px 16px;position:relative;margin-right:26px}
+  .fl-step:last-child{margin-right:0}
+  .fl-step::after{content:"";position:absolute;right:-20px;top:50%;width:14px;height:1px;background:var(--line-2)}
+  .fl-step:last-child::after{display:none}
+  .fl-step .fk{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.15em;color:var(--accent);margin-bottom:9px}
+  .fl-step .fh{font-family:var(--font-display);font-weight:700;font-size:.88rem;line-height:1.3;letter-spacing:-.01em}
+  .fl-step .fs{font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.45}
+  .fl-step.key{border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 7%,var(--ink-2))}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">01 / 10</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<!-- ============ PORTADA ============ -->
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Programa · 6 componentes</span>
+      <span class="mono">Molex · Daifuku Shuttle Rack M</span>
+    </div>
+    <h1 class="ptitle">Dashboard Inteligente de Capacidad ASR</h1>
+    <p class="thesis">Un solo panel que responde la pregunta que paraba la operación: <b>¿el rack puede recibir lo que viene?</b> Antes había que extraer los datos de SAP a mano, limpiarlos y armar el reporte — cuarenta minutos y una respuesta que ya venía tarde. Hoy es <b>un botón</b>: la macro dispara el script contra SAP, Power Query traduce, y el panel se pinta solo.</p>
+    <div class="rail rv">
+      <div><div class="rl">Sistema</div><div class="rvl">Daifuku Shuttle Rack M</div></div>
+      <div><div class="rl">Fuente de datos</div><div class="rvl">SAP · script + macro</div></div>
+      <div><div class="rl">Actualización</div><div class="rvl">1 botón · ~2 min</div></div>
+      <div><div class="rl">Rol</div><div class="rvl">Supervisor de Almacén</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 · QUÉ ES ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Un programa, no seis proyectos</h2></div>
+    <div class="prose rv" style="margin-bottom:26px">
+      <p>Durante mucho tiempo presenté esto como seis cosas distintas: control de totes vacíos, gestión de rechazos, materiales en localidades de paso, transferencias en tránsito, alertas visuales, respaldo por turno. <b>No son seis proyectos.</b> Son las seis piezas que hubo que construir para que un solo panel pudiera existir.</p>
+      <p>Cada componente resuelve una pregunta que el supervisor tenía que ir a buscar a una transacción distinta de SAP. Juntos —sobre la misma extracción, el mismo modelo y la misma escala de medición— forman el tablero de estado operativo del ASR.</p>
+    </div>
+    <div class="callout rv">
+      <b>La distinción importa.</b> Seis tarjetas sueltas se leen como «hizo muchas cosas pequeñas». Un programa con seis componentes se lee como lo que fue: diseñar un sistema, no producir reportes.
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 · CÓMO SE ACTUALIZA ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>El botón: de SAP al panel</h2></div>
+    <p class="sec-note rv">Lo que convierte esto en una herramienta y no en un reporte es el mecanismo de actualización. El supervisor no toca datos: pulsa <b>Actualizar</b> y la cadena completa corre sola.</p>
+
+    <div class="flowline rv">
+      <div class="fl-step">
+        <div class="fk">01 · Origen</div>
+        <div class="fh">Transacciones SAP</div>
+        <div class="fs">Ocupación, totes vacíos, TO's abiertas, tránsitos y rechazos viven en transacciones separadas.</div>
+      </div>
+      <div class="fl-step key">
+        <div class="fk">02 · Extracción</div>
+        <div class="fh">Script de SAP GUI</div>
+        <div class="fs">Grabado y parametrizado por fecha y turno. Recorre las transacciones y exporta cada una a CSV.</div>
+      </div>
+      <div class="fl-step key">
+        <div class="fk">03 · Disparo</div>
+        <div class="fh">Macro VBA · un botón</div>
+        <div class="fs">Lanza el script, espera los archivos, los deposita en la carpeta del turno y refresca el modelo.</div>
+      </div>
+      <div class="fl-step">
+        <div class="fk">04 · Limpieza</div>
+        <div class="fh">Power Query</div>
+        <div class="fs">Tipa, cruza contra catálogos y traduce los códigos de SAP a errores con nombre.</div>
+      </div>
+      <div class="fl-step">
+        <div class="fk">05 · Salida</div>
+        <div class="fh">Panel + alertas</div>
+        <div class="fs">KPIs, medidor de capacidad, Pareto de errores y el mensaje de acción del turno.</div>
+      </div>
+    </div>
+
+    <div class="note rv" style="margin-top:26px">
+      Cada corrida deja además el <b>CSV del turno guardado con fecha y hora</b>. Ese archivo no se borra: es el que convierte un panel de «cómo está ahora» en una serie histórica — y es de donde salen los proyectos de análisis de errores y de reempaque.
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 · EL PANEL EN OPERACIÓN ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">03</span><h2>El panel en operación</h2></div>
+    <p class="sec-note rv">Reconstrucción de una corrida real (<b>semana 49</b>). Mueve el control de ocupación para ver cómo cambian el medidor, el nivel de la escala y el mensaje que lee el supervisor.</p>
+
+    <div class="panel rv">
+      <div class="panel-top">
+        <div>
+          <div class="pt-name">ASR — Estado Operativo</div>
+          <div class="pt-sub">Shuttle Rack M · corte por turno</div>
+        </div>
+        <span class="badge live"><span class="bdot"></span>Interactivo</span>
+      </div>
+
+      <div class="panel-body">
+        <div class="gauge-wrap">
+          <div>
+            <div class="gauge">
+              <svg viewBox="0 0 200 200" aria-hidden="true">
+                <defs>
+                  <mask id="segmask">
+                    <circle cx="100" cy="100" r="78" fill="none" stroke="#fff" stroke-width="22"
+                            stroke-dasharray="17 6"/>
+                  </mask>
+                </defs>
+                <circle class="ring-bg" cx="100" cy="100" r="78" fill="none" stroke-width="22" mask="url(#segmask)"/>
+                <circle id="gaugeArc" cx="100" cy="100" r="78" fill="none" stroke="var(--crit)" stroke-width="22"
+                        mask="url(#segmask)" stroke-dasharray="490.1" stroke-dashoffset="490.1"
+                        style="transition:stroke-dashoffset .5s cubic-bezier(0.22,1,0.36,1),stroke .4s"/>
+              </svg>
+              <div class="gc">
+                <div class="gv"><span id="gOcc">95.4</span><span style="font-size:.44em;font-weight:700">%</span></div>
+                <div class="gs" id="gState">Capacidad Crítica</div>
+                <div class="gl">Ocupación</div>
+              </div>
+            </div>
+            <div class="sim">
+              <label for="occ">Simular ocupación del rack</label>
+              <input type="range" id="occ" min="70" max="100" step="0.1" value="95.4" aria-describedby="gState">
+              <div class="simfoot"><span>70 %</span><span>100 %</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="kgrid" style="margin-bottom:12px">
+              <div class="kbox"><div class="kl">Disponible</div><div class="kv" id="kDisp">4.6<small>%</small></div><div class="kn" id="kDispN">Localidades libres sobre el total del rack.</div></div>
+              <div class="kbox is-warn"><div class="kl">Totes vacíos</div><div class="kv">87<small>%</small></div><div class="kn">Contra objetivo de reposición.</div></div>
+              <div class="kbox is-risk"><div class="kl">Faltante</div><div class="kv">63<small>%</small></div><div class="kn">Brecha del plan de reempaque.</div></div>
+            </div>
+            <div class="kgrid">
+              <div class="kbox"><div class="kl">Entrando</div><div class="kv">1 748</div><div class="kn">Moldeo 1 744 · NDK 4 · Ensamble 0</div></div>
+              <div class="kbox"><div class="kl">Saliendo</div><div class="kv">29</div><div class="kn">Ensamble 29 · SSHIP 0 · Hold 0</div></div>
+              <div class="kbox is-crit"><div class="kl">TO's abiertas</div><div class="kv">1 719</div><div class="kn">Todas con más de 12 horas.</div></div>
+            </div>
+            <div class="alert rv" id="msgBox" style="margin-top:14px">
+              <b>Muy pocas localidades disponibles.</b> <span id="msgTxt">El rack está prácticamente lleno, con riesgo inminente de interrupción en las operaciones de entrada. Se requiere acción inmediata y urgente para liberar espacio y permitir el flujo normal de las operaciones.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-foot"><span class="fdot"></span>Reconstrucción del panel original · datos de la semana 49<span class="fdot"></span>Entrando 1 748 vs. saliendo 29 es el desbalance que dispara la alerta</div>
+    </div>
+
+    <!-- Pareto + acumulados -->
+    <div style="display:grid;gap:14px;margin-top:14px;grid-template-columns:1fr" class="rv">
+      <div class="panel">
+        <div class="panel-top">
+          <div><div class="pt-name">Reporte de errores ASR</div><div class="pt-sub">Semana 49 · 122 eventos</div></div>
+          <span class="chip">Componente 03</span>
+        </div>
+        <div class="panel-body">
+          <div class="bars">
+            <div class="brow"><span class="bl">Ubicación inhabilitada</span><span class="btrack"><span class="bfill" data-w="100" style="--bc:var(--risk)"></span></span><span class="bv">89<span class="bpc">73.0 %</span></span></div>
+            <div class="brow"><span class="bl">Sin expediente de recibo</span><span class="btrack"><span class="bfill" data-w="14.6" style="--bc:var(--crit)"></span></span><span class="bv">13<span class="bpc">10.7 %</span></span></div>
+            <div class="brow"><span class="bl">Tote con carga en pendiente (WRX)</span><span class="btrack"><span class="bfill" data-w="7.9" style="--bc:var(--warn)"></span></span><span class="bv">7<span class="bpc">5.7 %</span></span></div>
+            <div class="brow"><span class="bl">Tote duplicado en WRX</span><span class="btrack"><span class="bfill" data-w="6.7" style="--bc:var(--warn)"></span></span><span class="bv">6<span class="bpc">4.9 %</span></span></div>
+            <div class="brow"><span class="bl">Orden afectada</span><span class="btrack"><span class="bfill" data-w="4.5" style="--bc:var(--accent)"></span></span><span class="bv">4<span class="bpc">3.3 %</span></span></div>
+            <div class="brow"><span class="bl">Código de barras ilegible</span><span class="btrack"><span class="bfill" data-w="2.2" style="--bc:var(--accent)"></span></span><span class="bv">2<span class="bpc">1.6 %</span></span></div>
+            <div class="brow"><span class="bl">Carga desconocida</span><span class="btrack"><span class="bfill" data-w="1.1" style="--bc:var(--accent)"></span></span><span class="bv">1<span class="bpc">0.8 %</span></span></div>
+          </div>
+          <p class="note" style="margin-top:20px">Un solo modo de falla concentra <b>casi tres de cada cuatro eventos</b>. Ese hallazgo es el que abrió el proyecto de <a href="reporte-errores-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">análisis de errores desde ZMM400</a>: si el 73 % es ubicación inhabilitada, atacar el resto es ruido.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 · LA ESCALA ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">04</span><h2>La escala que le da sentido al número</h2></div>
+    <p class="sec-note rv">«95.4 %» no le dice nada a nadie a las seis de la mañana. La escala convierte el porcentaje en <b>un estado y una connotación operativa</b>, y hace que supervisión, moldeo y ensamble hablen el mismo idioma. El nivel activo se mueve con el control de arriba.</p>
+
+    <div class="scale rv">
+      <div class="lvl" data-min="0" data-max="79.9" style="--lc:var(--ok)">
+        <span class="lbar"></span>
+        <div><div class="lname">Operación Óptima</div><div class="lrange">70 % – 79 %</div>
+          <div class="lact">Amplia disponibilidad de ubicaciones para el flujo de entrada esperado. Las operaciones son fluidas y no se prevén retrasos por falta de espacio.</div>
+          <div class="lconn">Espacio amplio para nuevas unidades. Flujo de trabajo ideal.</div></div>
+      </div>
+      <div class="lvl" data-min="79.91" data-max="89.9" style="--lc:var(--warn)">
+        <span class="lbar"></span>
+        <div><div class="lname">Operación Estándar</div><div class="lrange">80 % – 89 %</div>
+          <div class="lact">El rack funciona dentro de su rango de utilización eficiente y normal. Aunque el espacio es menor que en «Óptima», sigue siendo suficiente para la demanda actual sin impacto significativo.</div>
+          <div class="lconn">Operación normal y eficiente. Utilización regular de la capacidad.</div></div>
+      </div>
+      <div class="lvl" data-min="89.91" data-max="95" style="--lc:var(--crit)">
+        <span class="lbar"></span>
+        <div><div class="lname">Alta Demanda</div><div class="lrange">90 % – 95 %</div>
+          <div class="lact">El rack opera cerca de su máxima capacidad, con pocas ubicaciones disponibles. Es crucial monitorear de cerca y considerar acciones como reubicación de unidades o planeación de desalojos para evitar una saturación.</div>
+          <div class="lconn">Acercándose al límite de capacidad. Monitoreo cercano y posible planificación de desalojos.</div></div>
+      </div>
+      <div class="lvl" data-min="95.01" data-max="100" style="--lc:var(--risk)">
+        <span class="lbar"></span>
+        <div><div class="lname">Capacidad Crítica</div><div class="lrange">Mayor a 95 %</div>
+          <div class="lact">El rack está prácticamente lleno, con riesgo inminente de interrupción en las operaciones de entrada. Se requiere acción inmediata y urgente para liberar espacio y permitir el flujo normal de las operaciones.</div>
+          <div class="lconn">Muy pocas localidades disponibles. Requiere acción urgente para liberar espacio y evitar interrupciones.</div></div>
+      </div>
+    </div>
+    <figure class="shot rv" data-shot="1y7756ZHzs3Xu6Cwga046xauT3kBGN9u8" data-alt="Escala de Medición para Ocupación de ASR">
+      <figcaption>La escala tal como se documentó en planta</figcaption>
+    </figure>
+    <p class="note rv" style="margin-top:22px">Los cuatro estados son los que se usaban en planta. Lo importante no son los cortes: es que <b>cada estado trae su connotación operativa</b> — qué significa y qué se hace. Un porcentaje se discute; un estado con acción asignada, no.</p>
+  </div>
+</section>
+
+<!-- ============ 05 · COMPONENTES ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">05</span><h2>Los seis componentes</h2></div>
+    <p class="sec-note rv">Cada uno con el mismo formato: qué buscaba, qué estaba roto, qué construí. Toca cualquiera para abrirlo.</p>
+
+    <div class="mods rv">
+      <article class="mod open">
+        <button class="mod-h"><span class="mn">01</span>
+          <span><span class="mt">Sistema de Respaldo Automático de Información por Turno</span><span class="mk">El motor · SAP Scripting · CSV · Power Query</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <dl class="ops">
+            <div class="op"><dt>Objetivo</dt><dd>Asegurar un respaldo confiable de los datos operativos del ASR en cada turno.</dd></div>
+            <div class="op is-p"><dt>Problema</dt><dd>La información crítica dependía de consultas en tiempo real, sin histórico estructurado. Sin histórico no hay análisis posterior ni rastreo de incidencias: cada turno empezaba de cero.</dd></div>
+            <div class="op is-s"><dt>Solución</dt><dd>Automaticé la descarga desde SAP en formato CSV mediante scripts y macros, generando un respaldo por turno que se conecta al dashboard para análisis inmediato. Es el componente del que dependen todos los demás.</dd></div>
+          </dl>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">02</span>
+          <span><span class="mt">Módulo de Control de Totes Vacíos</span><span class="mk">Disponibilidad · alerta preventiva</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <dl class="ops">
+            <div class="op"><dt>Objetivo</dt><dd>Monitorear la disponibilidad de totes vacíos necesarios para la continuidad operativa.</dd></div>
+            <div class="op is-p"><dt>Problema</dt><dd>La falta de visibilidad sobre totes disponibles generaba riesgo de interrupciones y reacción tardía ante faltantes.</dd></div>
+            <div class="op is-s"><dt>Solución</dt><dd>Indicadores de cantidad disponible, porcentaje contra objetivo y alertas visuales preventivas para disparar la reposición <em>antes</em> del desabasto, no después.</dd></div>
+          </dl>
+          <figure class="shot" data-shot="1qu9bLGdFAvHCM-xLs4SJ9QrhWkWFwG5U" data-alt="Módulo de Control de Totes Vacíos">
+            <figcaption>Captura del módulo en operación</figcaption>
+          </figure>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">03</span>
+          <span><span class="mt">Módulo de Gestión de Rechazos y Errores ASR</span><span class="mk">Pareto · ranking de fallas · WRX</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <dl class="ops">
+            <div class="op"><dt>Objetivo</dt><dd>Detectar las causas principales de las incidencias dentro del sistema automatizado.</dd></div>
+            <div class="op is-p"><dt>Problema</dt><dd>Los rechazos y errores se revisaban de forma reactiva, sin clasificación clara de tendencias ni prioridades.</dd></div>
+            <div class="op is-s"><dt>Solución</dt><dd>Panel de análisis con cantidad total, porcentaje por tipo de error, ranking de fallas y seguimiento para atacar causa raíz. De este módulo nació después un proyecto propio: la <a href="reporte-errores-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">extracción y traducción de errores desde ZMM400</a> con su tablero en Power BI.</dd></div>
+          </dl>
+          <figure class="shot" data-shot="1ghglvgpVgjgyEUCkdMn8TeVkILQrcwk6" data-alt="Módulo de Gestión de Rechazos y Errores ASR">
+            <figcaption>Captura del módulo en operación</figcaption>
+          </figure>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">04</span>
+          <span><span class="mt">Módulo de Materiales en Localidades de Paso</span><span class="mk">Zonas intermedias · cuellos de botella</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <dl class="ops">
+            <div class="op"><dt>Objetivo</dt><dd>Controlar materiales detenidos en ubicaciones intermedias del flujo operativo.</dd></div>
+            <div class="op is-p"><dt>Problema</dt><dd>Se generaban acumulaciones en zonas de paso sin visibilidad inmediata, afectando el flujo interno.</dd></div>
+            <div class="op is-s"><dt>Solución</dt><dd>Conteo por localidad crítica, alertas por acumulación y seguimiento visual para liberar cuellos de botella rápidamente.</dd></div>
+          </dl>
+          <figure class="shot" data-shot="1mp--dXjTEUrXYhNa5JaQ1Y7UlTKp1EdX" data-alt="Módulo de Materiales en Localidades de Paso">
+            <figcaption>Captura del módulo en operación</figcaption>
+          </figure>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">05</span>
+          <span><span class="mt">Módulo de Transferencias en Tránsito</span><span class="mk">Trazabilidad · antigüedad de movimientos</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <dl class="ops">
+            <div class="op"><dt>Objetivo</dt><dd>Dar seguimiento a los movimientos internos pendientes entre áreas.</dd></div>
+            <div class="op is-p"><dt>Problema</dt><dd>Existían materiales en tránsito sin trazabilidad rápida, impactando el surtido y los tiempos de respuesta.</dd></div>
+            <div class="op is-s"><dt>Solución</dt><dd>Indicadores de entradas pendientes, salidas pendientes, transferencias abiertas y antigüedad de los movimientos. Es el módulo que expuso las <b>1 719 TO's con más de 12 horas</b> que se ven en el panel.</dd></div>
+          </dl>
+          <figure class="shot" data-shot="1ez4dG1If2nHBRas2I75-J0aK5r7OXI1p" data-alt="Módulo de Transferencias en Tránsito">
+            <figcaption>Captura del módulo en operación</figcaption>
+          </figure>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">06</span>
+          <span><span class="mt">Sistema de Alertas Visuales para Capacidad Crítica</span><span class="mk">Gauge · semáforo · mensaje de acción</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <dl class="ops">
+            <div class="op"><dt>Objetivo</dt><dd>Facilitar decisiones inmediatas sobre la saturación del rack.</dd></div>
+            <div class="op is-p"><dt>Problema</dt><dd>Los porcentajes por sí solos no transmitían urgencia ni prioridad operativa.</dd></div>
+            <div class="op is-s"><dt>Solución</dt><dd>Visuales ejecutivos tipo gauge y semáforo que traducen el dato técnico en una alerta clara para supervisión y liderazgo — apoyados en la escala de medición de cuatro niveles de la sección anterior.</dd></div>
+          </dl>
+        </div></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 · QUÉ HABILITA ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">06</span><h2>Qué decisiones habilita</h2></div>
+    <p class="sec-note rv">No mido el ahorro en dinero porque no tuve forma de medirlo. Lo que sí puedo describir con precisión es qué se decide con este panel que antes se decidía a ciegas.</p>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Contener o aceptar el ingreso de moldeo.</b> Con entrando 1 748 contra saliendo 29, el desbalance es visible antes de que el rack se cierre, no cuando ya rechazó el primer tote.</span></li>
+      <li><span class="tk">→</span><span><b>Priorizar el reempaque del turno.</b> Los acumulados por número de parte dicen qué liberar primero para recuperar localidades.</span></li>
+      <li><span class="tk">→</span><span><b>Atacar la causa raíz correcta.</b> El Pareto evita gastar el turno en el modo de falla equivocado.</span></li>
+      <li><span class="tk">→</span><span><b>Escalar con evidencia.</b> El mensaje de acción y el nivel de la escala son el mismo lenguaje para el materialista y para el gerente.</span></li>
+      <li><span class="tk">→</span><span><b>Analizar hacia atrás.</b> El respaldo por turno permite comparar semanas y ver si una acción funcionó — algo imposible con consultas en tiempo real.</span></li>
+    </ul>
+
+    <div class="acts rv" style="margin-top:34px">
+      <a class="btn btn-solid" href="https://sites.google.com/view/cristiangaspar-portfolio/prototipos/dashboard-estado-operativo-del-asr-daifuku" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
+        Abrir el prototipo en vivo
+      </a>
+      <a class="btn btn-line" href="https://docs.google.com/document/d/1wNWCcadGKLcwM5aJv0BYJTuRrTWxbXwLfkzHnDrw3rc/edit" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l6 6v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6"/></svg>
+        Documentación
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">SAP Scripting</span><span class="tag hl">Excel VBA</span><span class="tag hl">Power Query</span>
+      <span class="tag">CSV por turno</span><span class="tag">Gauge charts</span><span class="tag">KPIs operativos</span><span class="tag">Daifuku Shuttle Rack M</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="index.html"><span class="pl">Volver</span><span class="pt">Todos los proyectos</span></a>
+      <a href="reporte-errores-asr.html" class="next"><span class="pl">Siguiente proyecto</span><span class="pt">Reporte de Errores ASR · ZMM400 → Power BI</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Proyecto 01 · Programa</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+<script>
+(function(){
+  "use strict";
+  var C = 2 * Math.PI * 78;                    // circunferencia del anillo
+  var arc = document.getElementById('gaugeArc');
+  var occEl = document.getElementById('gOcc');
+  var stEl  = document.getElementById('gState');
+  var dispEl= document.getElementById('kDisp');
+  var msg   = document.getElementById('msgTxt');
+  var box   = document.getElementById('msgBox');
+  var range = document.getElementById('occ');
+  var lvls  = Array.prototype.slice.call(document.querySelectorAll('.lvl'));
+
+  // Escala de medición tal como se usaba en planta
+  var LEVELS = [
+    {max:79.9, name:'Operación Óptima',   color:'var(--ok)',   lead:'Espacio amplio para nuevas unidades.',
+     msg:'El rack cuenta con amplia disponibilidad de ubicaciones para el flujo de entrada esperado. Las operaciones son fluidas y no se prevén retrasos por falta de espacio.'},
+    {max:89.9, name:'Operación Estándar', color:'var(--warn)', lead:'Operación normal y eficiente.',
+     msg:'El rack funciona dentro de su rango de utilización eficiente. El espacio es menor que en «Óptima», pero sigue siendo suficiente para la demanda actual sin impacto significativo.'},
+    {max:95,   name:'Alta Demanda',       color:'var(--crit)', lead:'Acercándose al límite de capacidad.',
+     msg:'El rack opera cerca de su máxima capacidad, con pocas ubicaciones disponibles. Requiere monitoreo cercano y considerar reubicación de unidades o planeación de desalojos para evitar la saturación.'},
+    {max:100,  name:'Capacidad Crítica',  color:'var(--risk)', lead:'Muy pocas localidades disponibles.',
+     msg:'El rack está prácticamente lleno, con riesgo inminente de interrupción en las operaciones de entrada. Se requiere acción inmediata y urgente para liberar espacio y permitir el flujo normal de las operaciones.'}
+  ];
+
+  function levelFor(v){
+    for (var i=0;i<LEVELS.length;i++){ if (v <= LEVELS[i].max) return LEVELS[i]; }
+    return LEVELS[LEVELS.length-1];
+  }
+
+  function render(v){
+    var lv = levelFor(v);
+    arc.setAttribute('stroke-dasharray', C.toFixed(1));
+    arc.style.strokeDashoffset = (C * (1 - v/100)).toFixed(1);
+    arc.setAttribute('stroke', lv.color);
+    occEl.textContent = v.toFixed(1);
+    stEl.textContent  = lv.name;
+    stEl.style.color  = lv.color;
+    dispEl.innerHTML  = (100 - v).toFixed(1) + '<small>%</small>';
+    msg.textContent   = lv.msg;
+    box.style.background   = 'color-mix(in srgb, ' + lv.color + ' 11%, transparent)';
+    box.style.borderColor  = 'color-mix(in srgb, ' + lv.color + ' 30%, transparent)';
+    box.querySelector('b').style.color = lv.color;
+    box.querySelector('b').textContent = lv.lead;
+    lvls.forEach(function(el){
+      var lo = parseFloat(el.dataset.min), hi = parseFloat(el.dataset.max);
+      el.classList.toggle('on', v >= lo && v <= hi);
+    });
+  }
+
+  range.addEventListener('input', function(){ render(parseFloat(range.value)); });
+
+  // Pinta al entrar en pantalla, para que el arco se anime
+  if ('IntersectionObserver' in window){
+    var g = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ render(parseFloat(range.value)); g.unobserve(e.target); } });
+    }, {threshold:.4});
+    g.observe(document.querySelector('.gauge'));
+  }
+  render(parseFloat(range.value));
+})();
+</script>
+</body>
+</html>
