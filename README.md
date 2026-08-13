@@ -101,7 +101,7 @@ detalle entra a su página.
 
 | Página de Sites | Archivo | Alto |
 |---|---|---|
-| Portafolio de proyectos | `proyectos/index.html` | **4 850** |
+| Portafolio de proyectos | `proyectos/index.html` | **4 350** |
 | Dashboard de Capacidad ASR | `proyectos/dashboard-asr.html` | **6 200** |
 | Reporte de Errores ASR | `proyectos/reporte-errores-asr.html` | **5 400** |
 | Sellos con Peso Alto | `proyectos/sellos-peso-alto.html` | **5 700** |

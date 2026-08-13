@@ -13,8 +13,11 @@
   :root{--accent:var(--signal)}
   /* ---------- El programa ---------- */
   .program{position:relative;background:var(--ink-2);border:1px solid var(--line-2);border-radius:22px;padding:clamp(22px,4vw,38px);overflow:hidden;margin-bottom:34px}
-  .program-aura{position:absolute;right:-130px;top:-160px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c-dash) 16%,transparent),transparent 66%);pointer-events:none}
   .program > *{position:relative;z-index:2}
+  /* Va DESPUÉS de «.program > *» y con más especificidad: si no, esa regla
+     la vuelve «relative», el círculo decorativo entra en el flujo y empuja
+     el contenido 500 px hacia abajo. */
+  .program .program-aura{position:absolute;z-index:1;right:-130px;top:-160px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--c-dash) 16%,transparent),transparent 66%);pointer-events:none}
   .pg-kick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
   .program h2{font-family:var(--font-display);font-weight:900;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.032em;line-height:1.04;margin-bottom:16px;max-width:18ch}
   .pg-lede{color:var(--muted);font-size:1.02rem;max-width:64ch;margin-bottom:26px}
