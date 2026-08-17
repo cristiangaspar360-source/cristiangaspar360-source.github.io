@@ -23,7 +23,7 @@
      /view/cristiangaspar-portfolio/). Si dejas una vacía o la
      borras, ese enlace seguirá abriendo el HTML dentro del marco. */
 
-  var SITIO = "https://sites.google.com/view/cristiangaspar-portfolio/";
+  var SITIO = "https://sites.google.com/view/cristiangaspar-portfolio/portfolio-de-proyectos?authuser=0";
 
   var MAPA = {
     "index.html":                            "",
