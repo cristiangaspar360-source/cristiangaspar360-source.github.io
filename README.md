@@ -22,6 +22,7 @@ sitio/
 │                                      (?bloque=perfil|proyectos|trayectoria|formacion)
 ├─ proyectos/
 │  ├─ index.html                       Hub · el programa + las 10 tarjetas con detalle
+│  ├─ que-es-un-asr.html               00 · CONTEXTO — qué es un ASR y la grieta WRX↔SAP
 │  ├─ dashboard-asr.html               01 · EL PROGRAMA — 6 componentes, medidor interactivo
 │  ├─ reporte-errores-asr.html         02 · ZMM400 → Power Query → Power BI en Teams
 │  ├─ junta-arranque.html              03 · Antes/después + simulador de la macro
@@ -35,13 +36,33 @@ sitio/
 ├─ herramientas/
 │  ├─ agente-reporte-modular.html      Herramienta funcional (Firebase + localStorage)
 │  ├─ validacion-reempaque.html        Prototipo: pega plan + historial SAP y valida
-│  └─ extraccion-errores.html          Prototipo: traduce el log de ZMM400 y calcula la variación
-└─ assets/
-   ├─ proyecto.css                     Sistema de diseño de las páginas de proyecto
-   ├─ proyecto.js                      Tema, revelado, acordeón, contadores
-   ├─ posters.js                       Miniaturas SVG, una por proyecto
-   └─ sites-bridge.js                  ← EDITA EL MAPA antes de publicar en Sites
+│  ├─ extraccion-errores.html          Prototipo: traduce el log de ZMM400 y calcula la variación
+│  └─ descargables/                    Excel + guía que el visitante baja y usa
+├─ assets/
+│  ├─ proyecto.css                     Sistema de diseño de las páginas de proyecto
+│  ├─ proyecto.js                      Tema, revelado, acordeón, contadores
+│  ├─ posters.js                       Miniaturas SVG, una por proyecto
+│  └─ sites-bridge.js                  ← EDITA EL MAPA antes de publicar en Sites
+├─ construir-publicar.mjs              Genera publicar/ (páginas autocontenidas)
+└─ publicar/                           Salida generada · no se versiona
 ```
+
+## Herramientas descargables
+
+Además de las demos que corren en la página, cinco proyectos entregan un archivo que el
+visitante **descarga y usa con sus propios datos**. Todos traen datos demo anonimizados.
+
+| Archivo | Proyecto | Botón en |
+|---|---|---|
+| `Dashboard-Inteligente-ASR.xlsx` | El programa · 6 módulos | Bloque del programa + su página |
+| `Sellos-Peso-Alto.xlsx` | Sellos con peso alto | Tarjeta 07 + su página |
+| `Roles-Operativos-Matriz.xlsx` | Roles operativos | Tarjeta 09 + su página |
+| `Junta-Arranque-KPIs.xlsx` | Junta de arranque | Tarjeta 03 + su página |
+| `Solicitud-Totes-Batch.xlsx` + `Guia-Solicitud-Totes.html` | Solicitud de totes | Tarjeta 08 + su página |
+
+Viven en `herramientas/descargables/`. Se generan con el script del repositorio
+[`herramientas`](https://github.com/cristiangaspar360-source/herramientas), donde también
+están publicados por separado.
 
 ## Publicar en Google Sites
 
@@ -68,6 +89,7 @@ para verse dentro de un recuadro.
 ```
 Inicio                          ← index.html   (perfil + índice compacto)
 Portafolio de proyectos         ← proyectos/index.html
+  ├─ Qué es un ASR (contexto)   ← proyectos/que-es-un-asr.html
   ├─ Dashboard de Capacidad ASR ← proyectos/dashboard-asr.html
   ├─ Reporte de Errores ASR     ← proyectos/reporte-errores-asr.html
   ├─ Junta de Arranque          ← proyectos/junta-arranque.html
@@ -86,9 +108,31 @@ trayectoria, formación, contacto) y muestra los proyectos como un **índice com
 renglones**, no como tarjetas grandes: el perfil de almacenista sigue mandando, y quien quiera
 detalle entra a su página.
 
+### Páginas autocontenidas: la carpeta `publicar/`
+
+Cada página del sitio comparte `assets/`. Eso está bien para mantenerlo, pero significa que
+una página **suelta** no funciona: si la mueves sin la carpeta `assets/`, pierde estilos y
+scripts. Para publicar y medir **página por página** conviene una copia que se baste a sí misma.
+
+```bash
+node portafolio/sitio/construir-publicar.mjs
+```
+
+Genera `publicar/` con las 17 páginas, cada una con su CSS y su JS **dentro del archivo**,
+más los descargables. Detalles:
+
+- **Conserva la estructura de carpetas** y **no toca ningún enlace**, para que los enlaces
+  relativos y el `MAPA` de `sites-bridge.js` (que identifica cada página por su ruta) sigan
+  funcionando igual.
+- Lo único que queda remoto son las **tipografías de Google** y las **capturas de Drive**, que
+  ya hoy se cargan así dentro del iframe.
+- Se regenera completa en cada corrida: **edita siempre los originales**, nunca `publicar/`.
+- No se versiona (está en `.gitignore`).
+
 ### Pasos
 
-1. Sube la carpeta `sitio/` a **GitHub Pages** (o cualquier hosting estático).
+1. Genera `publicar/` con el comando de arriba y sube **esa** carpeta a **GitHub Pages**
+   (o sube `sitio/` completo si prefieres mantener los assets compartidos: ambas funcionan).
 2. Edita `MAPA` en `assets/sites-bridge.js` con las rutas de tus páginas de Sites.
 3. En cada página de Sites: **Insertar → Insertar → Por URL**, pega la URL del HTML.
 4. Arrastra el borde inferior del marco hasta el alto de la tabla siguiente, para que **no

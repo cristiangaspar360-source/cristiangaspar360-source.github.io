@@ -28,6 +28,7 @@
   var MAPA = {
     "index.html":                            "",
     "proyectos/index.html":                  "portfolio-de-proyectos",
+    "proyectos/que-es-un-asr.html":          "portfolio-de-proyectos/que-es-un-asr",
     "proyectos/dashboard-asr.html":          "portfolio-de-proyectos/dashboard-de-capacidad-asr",
     "proyectos/reporte-errores-asr.html":    "portfolio-de-proyectos/reporte-de-errores-asr",
     "proyectos/junta-arranque.html":         "portfolio-de-proyectos/junta-de-arranque-de-turno",

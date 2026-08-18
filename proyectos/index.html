@@ -29,8 +29,11 @@
   [data-theme="light"] .pg-mod{background:var(--ink-3)}
   .pg-mod:hover{border-color:color-mix(in srgb,var(--c-dash) 45%,transparent);transform:translateX(3px)}
   .pg-mod .pn{font-family:var(--font-mono);font-size:.6rem;font-weight:600;color:var(--c-dash);text-align:center}
-  .pg-thumb{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--ink-3)}
-  .pg-thumb svg{width:100%;height:auto;display:block}
+  /* Caja de proporción fija: el SVG dibujado y la captura real de Drive se
+     comportan igual. Sin la regla para «img», posters.js mete la imagen a
+     tamaño natural (1000 px) y overflow:hidden la recortaba. */
+  .pg-thumb{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--ink-3);aspect-ratio:16/10}
+  .pg-thumb svg,.pg-thumb img{width:100%;height:100%;object-fit:contain;display:block}
   .pg-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
   .pg-stat{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 13px}
   [data-theme="light"] .pg-stat{background:var(--ink-3)}
@@ -53,7 +56,11 @@
   .card:hover{transform:translateY(-4px);border-color:var(--cat,var(--signal));box-shadow:var(--shadow)}
   .card.hidden{display:none}
   .card-media{margin:-22px -22px 2px;aspect-ratio:16/10;overflow:hidden;background:var(--ink-3);position:relative;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center}
-  .card-media svg,.card-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
+  /* «contain» y no «cover»: las capturas de tablero llevan texto y cifras en
+     los bordes; recortarlas las volvía ilegibles. Con la caja 16/10 fija,
+     todas las miniaturas miden igual aunque la captura venga en otra
+     proporción — que es lo que hace que la rejilla se vea pareja. */
+  .card-media svg,.card-media img{width:100%;height:100%;object-fit:contain;display:block;transition:transform .5s var(--ease)}
   .card:hover .card-media svg,.card:hover .card-media img{transform:scale(1.035)}
   .card-name{font-family:var(--font-display);font-weight:700;font-size:1.05rem;line-height:1.3;letter-spacing:-.01em}
   .card-name a::after{content:"";position:absolute;inset:0;z-index:2}
@@ -113,6 +120,15 @@
 <section class="sec" style="padding-top:14px">
   <div class="wrap">
 
+    <!-- ====== PUERTA DE ENTRADA PARA QUIEN NO CONOCE EL DOMINIO ====== -->
+    <a class="callout rv" href="que-es-un-asr.html" style="display:block;margin-bottom:26px;text-decoration:none">
+      <b style="color:var(--text)">¿No conoces el ASR? Empieza por aquí.</b>
+      <span style="color:var(--muted)"> Qué es un almacén automático, por qué <b style="color:var(--text)">dos sistemas</b> mandan sobre el mismo tote y qué pasa cuando no coinciden — el contexto que vuelve entendibles casi todos estos proyectos.</span>
+      <span class="mono" style="display:inline-flex;align-items:center;gap:6px;color:var(--signal);margin-left:6px">Leer el contexto
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
     <!-- ====== EL PROGRAMA ====== -->
     <div class="program rv">
       <div class="program-aura"></div>
@@ -145,6 +161,10 @@
       <div class="pg-acts">
         <a class="btn btn-dash" href="dashboard-asr.html">Ver el programa completo
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-line" href="../herramientas/descargables/Dashboard-Inteligente-ASR.xlsx" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+          Descargar Excel · 6 módulos
         </a>
         <a class="btn btn-line" href="https://sites.google.com/view/cristiangaspar-portfolio/prototipos/dashboard-estado-operativo-del-asr-daifuku" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9V3Z"/></svg>
@@ -200,6 +220,7 @@
         <div class="card-desc">Cinco pasos manuales —recolectar, copiar en varios Excel, pegar en PowerPoint— reemplazados por un solo archivo conectado a SAP que genera la presentación completa, con branding corporativo, en lo que tarda en abrirse.</div>
         <div class="ctags"><span class="ctag">VBA</span><span class="ctag">Excel</span><span class="ctag">PowerPoint</span><span class="ctag">SAP</span></div>
         <div class="actions">
+          <a class="pbtn pbtn-doc" href="../herramientas/descargables/Junta-Arranque-KPIs.xlsx" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Descargar Excel</a>
           <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/1RrryfoJni-IeT6fIAhx0H2ya90lttHRgDH8RIygFn2E/edit" target="_blank" rel="noopener">Documentación</a>
         </div>
       </article>
@@ -245,6 +266,7 @@
         <div class="ctags"><span class="ctag">Excel</span><span class="ctag">SAP</span><span class="ctag">Formato condicional</span><span class="ctag">Prevención</span></div>
         <div class="actions">
           <a class="pbtn pbtn-demo" href="sellos-peso-alto.html">Ver el control</a>
+          <a class="pbtn pbtn-doc" href="../herramientas/descargables/Sellos-Peso-Alto.xlsx" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Descargar Excel</a>
         </div>
       </article>
 
@@ -255,6 +277,7 @@
         <div class="card-desc">Cada tote generaba su propia orden de transporte, y en un pico eso son decenas de órdenes compitiendo por el mismo rack. La técnica batch con LT01 agrupa la solicitud en una sola TO: mismo material, una fracción del ruido en la cola del ASR.</div>
         <div class="ctags"><span class="ctag">SAP LT01</span><span class="ctag">Batch</span><span class="ctag">Proceso</span></div>
         <div class="actions">
+          <a class="pbtn pbtn-doc" href="../herramientas/descargables/Solicitud-Totes-Batch.xlsx" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Descargar Excel</a>
           <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/1v3eYe0eZMoUPS52x6gfjWDaeOvAAUULAeR5wV_y3HrA/edit" target="_blank" rel="noopener">Documentación</a>
         </div>
       </article>
@@ -266,6 +289,7 @@
         <div class="card-desc">El turno funcionaba porque ciertas personas sabían cosas que nadie más sabía — una cadena de puntos únicos de falla. Cuatro zonas críticas con rotación por competencias eliminaron esa dependencia y garantizaron cobertura completa del turno.</div>
         <div class="ctags"><span class="ctag">Diseño organizacional</span><span class="ctag">Capacitación cruzada</span><span class="ctag">Liderazgo</span></div>
         <div class="actions">
+          <a class="pbtn pbtn-doc" href="../herramientas/descargables/Roles-Operativos-Matriz.xlsx" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Descargar matriz</a>
           <a class="pbtn pbtn-doc" href="https://docs.google.com/document/d/11BILDeR0NpoA9VxPDKPPmWJDBxBQ-0i4EILuifo190o/edit" target="_blank" rel="noopener">Documentación</a>
         </div>
       </article>

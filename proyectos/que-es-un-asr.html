@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>¿Qué es un ASR? · WRX y SAP — Cristian Gaspar Aguayo</title>
+<meta name="description" content="El contexto para entender los proyectos: qué es un almacén automático (ASR), por qué tiene dos sistemas que mandan sobre el mismo tote, y qué pasa cuando no coinciden." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/proyecto.css">
+<style>
+  :root{--accent:var(--c-dash)}
+  /* Las dos cabezas: dos tarjetas enfrentadas con su propio color */
+  .heads{display:grid;gap:14px;grid-template-columns:1fr;margin:20px 0}
+  @media(min-width:720px){.heads{grid-template-columns:1fr auto 1fr;align-items:stretch}}
+  .head{background:var(--ink-2);border:1px solid var(--line);border-top:3px solid var(--hc,var(--accent));border-radius:12px;padding:18px}
+  .head .hn{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--hc,var(--accent));font-weight:600;margin-bottom:9px}
+  .head .ht{font-family:var(--font-display);font-weight:700;font-size:1.02rem;letter-spacing:-.01em;margin-bottom:8px}
+  .head .hd{color:var(--muted);font-size:.9rem;line-height:1.6}
+  .head .hq{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line-2);font-family:var(--font-mono);font-size:.66rem;color:var(--hc,var(--accent))}
+  .vs-mid{display:grid;place-content:center;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:6px 0}
+  @media(min-width:720px){.vs-mid{writing-mode:vertical-rl;transform:rotate(180deg)}}
+  /* Grieta: la barra partida */
+  .crack{display:flex;align-items:center;gap:0;margin:22px 0 6px}
+  .crack .side{flex:1;height:8px;border-radius:4px;background:var(--hc,var(--accent));opacity:.55}
+  .crack .gapx{width:64px;height:8px;background:repeating-linear-gradient(90deg,var(--risk) 0 5px,transparent 5px 10px);flex:none}
+  .crack-l{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="back" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      Portafolio
+    </a>
+    <div class="bar-tools">
+      <span class="mono" style="font-size:.58rem">Contexto</span>
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bar-prog"></div>
+</header>
+
+<section class="phero">
+  <div class="wrap">
+    <div class="kicker">
+      <span class="badge"><span class="bdot"></span>Empieza por aquí</span>
+      <span class="mono">Molex · Daifuku Shuttle Rack M</span>
+    </div>
+    <h1 class="ptitle">¿Qué es un ASR?</h1>
+    <p class="thesis">Casi todos mis proyectos giran alrededor de un almacén automático y de un problema que no se ve en ninguna foto: <b>dos sistemas distintos mandan sobre el mismo tote</b>, y cuando no coinciden, el rack rechaza material que estaba perfectamente bien. Esta página explica ese contexto — <b>ábrela por partes, solo lo que te interese</b>.</p>
+    <div class="rail rv">
+      <div><div class="rl">Qué es</div><div class="rvl">Almacén automático</div></div>
+      <div><div class="rl">Quién manda</div><div class="rvl">WRX + SAP</div></div>
+      <div><div class="rl">El problema</div><div class="rvl">No siempre coinciden</div></div>
+      <div><div class="rl">Consecuencia</div><div class="rvl">Rechazos en la entrada</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 · Las tres capas, en acordeón -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">01</span><h2>Tres capas, de lo simple a lo específico</h2></div>
+    <p class="sec-note rv">Cada bloque empieza <b>cerrado</b>. Abre solo el que te haga falta: si ya sabes qué es un almacén automático, salta al segundo; si vienes por los proyectos, el tercero es el que los explica.</p>
+
+    <div class="mods rv">
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">01</span>
+          <span><span class="mt">Qué es un ASR, en una frase</span><span class="mk">El rack que se guarda y se entrega solo</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <div class="prose">
+            <p><b>ASR</b> es un almacén de <b>a</b>lmacenamiento y <b>r</b>ecuperación automatizados: una estructura de varios niveles donde <b>nadie entra a buscar nada</b>. Unos vehículos —los <em>shuttles</em>— se mueven por los pasillos guardando y sacando cajas estandarizadas, los <b>totes</b>.</p>
+            <p>El operador no dice «está en el pasillo 4, nivel 3». Dice <b>«necesito este material»</b> y el sistema resuelve dónde está y cómo sacarlo. A cambio de esa comodidad, el almacén impone dos reglas:</p>
+          </div>
+          <ul class="ticks" style="margin-top:16px">
+            <li><span class="tk">→</span><span><b>Solo entra lo que cumple.</b> Peso, etiqueta legible, ubicación válida. Lo que no cumple, se rechaza en la puerta.</span></li>
+            <li><span class="tk">→</span><span><b>La capacidad es finita y se llena.</b> Cuando el rack está lleno, no es que «vaya lento»: la entrada se detiene y la producción se queda esperando.</span></li>
+          </ul>
+          <div class="callout" style="margin-top:18px">
+            Por eso existe el <a href="dashboard-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">Dashboard de Capacidad</a>: su única pregunta es <b>¿el rack puede recibir lo que viene?</b>
+          </div>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">02</span>
+          <span><span class="mt">Las dos cabezas: WRX y SAP</span><span class="mk">Dos sistemas, un mismo tote</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <div class="prose">
+            <p>Aquí está el detalle que casi nadie explica y que vuelve entendible todo lo demás: sobre cada tote mandan <b>dos sistemas distintos</b>, y cada uno guarda su propia versión de la verdad.</p>
+          </div>
+
+          <div class="heads">
+            <div class="head" style="--hc:var(--c-dash)">
+              <div class="hn">Sistema 01</div>
+              <div class="ht">WRX · el que mueve</div>
+              <div class="hd">Gobierna el ASR por dentro. Sabe en qué posición física está cada tote, ordena a los shuttles y decide si una carga entra o se rechaza.</div>
+              <div class="hq">Su verdad: dónde <em>está</em></div>
+            </div>
+            <div class="vs-mid">mismo tote</div>
+            <div class="head" style="--hc:var(--c-sap)">
+              <div class="hn">Sistema 02</div>
+              <div class="ht">SAP · el que contabiliza</div>
+              <div class="hd">Gobierna el inventario de la planta. Sabe qué material existe, a qué orden pertenece y qué órdenes de transferencia (TO) están abiertas.</div>
+              <div class="hq">Su verdad: qué <em>es</em> y a quién pertenece</div>
+            </div>
+          </div>
+
+          <p class="note">Ninguno de los dos está mal diseñado. El punto es que <b>responden preguntas distintas</b>, y mientras las dos respuestas coincidan, el material fluye sin que nadie note que son dos sistemas.</p>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">03</span>
+          <span><span class="mt">La grieta: cuando dejan de coincidir</span><span class="mk">De dónde salen los rechazos — y los proyectos</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <div class="crack">
+            <div class="side" style="--hc:var(--c-dash)"></div>
+            <div class="gapx" title="La grieta"></div>
+            <div class="side" style="--hc:var(--c-sap)"></div>
+          </div>
+          <div class="crack-l"><span>WRX dice una cosa</span><span style="color:var(--risk)">desajuste</span><span>SAP dice otra</span></div>
+
+          <div class="prose">
+            <p>Cuando la información de un lado no llega íntegra al otro, el tote llega al punto de ingreso con <b>una identidad ambigua</b>: para WRX ocupa un lugar, para SAP no existe o pertenece a otra orden. El ASR hace lo único sensato que puede hacer — <b>lo rechaza</b>.</p>
+            <p>Y aquí está lo que cambia la lectura del problema: el tote rechazado casi nunca tiene un defecto físico. <b>Lo que falla es el dato</b>, no la máquina ni el material.</p>
+          </div>
+
+          <div class="alert" style="margin-top:16px">
+            <b>Un rechazo no cuesta el tote: cuesta la entrada.</b> Mientras alguien diagnostica ese tote, la línea de ingreso está detenida y lo que viene detrás se acumula.
+          </div>
+
+          <p class="note" style="margin-top:18px">Esta lectura —«fallas de dato, no de máquina»— es <b>mi interpretación del dominio</b> a partir de la naturaleza de cada categoría de error, no una clasificación que venga etiquetada así en el sistema.</p>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">04</span>
+          <span><span class="mt">Los siete modos de falla, con números</span><span class="mk">150 eventos · 22–24 ene 2026</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <p class="sec-note" style="margin-bottom:16px">Un corte real del reporte de errores. Ordenado por Pareto: las causas de arriba son las que de verdad mueven el número.</p>
+          <div class="scrollx">
+            <table class="dt" style="min-width:560px">
+              <thead><tr><th>Modo de falla</th><th class="r">Eventos</th><th class="r">%</th><th class="r">% acum.</th><th>Dónde vive el desajuste</th></tr></thead>
+              <tbody>
+                <tr><td>Ubicación inhabilitada</td><td class="r n">46</td><td class="r n">30.7</td><td class="r n" style="color:var(--risk);font-weight:600">30.7</td><td><span class="chip">WRX</span></td></tr>
+                <tr><td>Tote con carga pendiente en WRX</td><td class="r n">29</td><td class="r n">19.3</td><td class="r n" style="color:var(--risk);font-weight:600">50.0</td><td><span class="chip">WRX</span></td></tr>
+                <tr><td>Sin expediente de recibo</td><td class="r n">28</td><td class="r n">18.7</td><td class="r n" style="color:var(--risk);font-weight:600">68.7</td><td><span class="chip">SAP</span></td></tr>
+                <tr><td>Código de barras ilegible</td><td class="r n">19</td><td class="r n">12.7</td><td class="r n">81.3</td><td><span class="chip">Etiqueta</span></td></tr>
+                <tr><td>Orden afectada</td><td class="r n">16</td><td class="r n">10.7</td><td class="r n">92.0</td><td><span class="chip">SAP</span></td></tr>
+                <tr><td>Tote duplicado en WRX</td><td class="r n">7</td><td class="r n">4.7</td><td class="r n">96.7</td><td><span class="chip">WRX</span></td></tr>
+                <tr><td>Carga desconocida</td><td class="r n">5</td><td class="r n">3.3</td><td class="r n">100.0</td><td><span class="chip">Ninguno</span></td></tr>
+              </tbody>
+              <tfoot><tr><td>Total</td><td class="r">150</td><td class="r">100</td><td class="r"></td><td></td></tr></tfoot>
+            </table>
+          </div>
+          <div class="callout" style="margin-top:20px">
+            <b>Tres causas explican el 68.7 %.</b> Ninguna de las tres es un problema mecánico: son una ubicación que el sistema tiene bloqueada, una carga que quedó pendiente y un recibo que nunca se registró. Es la grieta, medida.
+          </div>
+          <p class="note" style="margin-top:16px">Fuente: reporte de errores del ASR, periodo del 22 al 24 de enero de 2026. El día 23 concentra 94 de los 150 eventos.</p>
+        </div></div></div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- 02 · De la grieta a los proyectos -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-h rv"><span class="n">02</span><h2>De la grieta a los proyectos</h2></div>
+    <p class="sec-note rv">Vistos de uno en uno, mis proyectos parecen automatizaciones sueltas. Vistos desde aquí, casi todos atacan el mismo problema por lugares distintos.</p>
+    <ul class="ticks rv">
+      <li><span class="tk">→</span><span><b>Medir la grieta.</b> El <a href="reporte-errores-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">reporte de errores desde ZMM400</a> traduce el log del sistema a errores con nombre y los ordena por Pareto. Sin esto, «hubo rechazos» era todo lo que se sabía.</span></li>
+      <li><span class="tk">→</span><span><b>Resolver el tote ya rechazado.</b> El <a href="rechazos-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">árbol de decisión de rechazos</a> convierte cinco modos de falla en una ruta de pasos, para que el diagnóstico no dependa de quién esté en el turno.</span></li>
+      <li><span class="tk">→</span><span><b>Evitar que llegue a rechazarse.</b> El <a href="sellos-peso-alto.html" style="color:var(--accent);border-bottom:1px solid currentColor">control de sellos con peso alto</a> intercepta en el listado lo que el rack rechazaría en la banda.</span></li>
+      <li><span class="tk">→</span><span><b>Saber si el rack aguanta.</b> El <a href="dashboard-asr.html" style="color:var(--accent);border-bottom:1px solid currentColor">Dashboard de Capacidad</a> reúne los seis módulos que responden si hay espacio para lo que viene.</span></li>
+      <li><span class="tk">→</span><span><b>No inflar la cola.</b> La <a href="solicitud-totes.html" style="color:var(--accent);border-bottom:1px solid currentColor">solicitud de totes en batch</a> evita que treinta peticiones sueltas se lean como treinta necesidades distintas.</span></li>
+    </ul>
+
+    <div class="acts rv" style="margin-top:32px">
+      <a class="btn btn-solid" href="dashboard-asr.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        Empezar por el Dashboard ASR
+      </a>
+      <a class="btn btn-line" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Ver todos los proyectos
+      </a>
+    </div>
+
+    <div class="tags rv" style="margin-top:26px">
+      <span class="tag hl">ASR</span><span class="tag hl">WRX</span><span class="tag hl">SAP WM</span>
+      <span class="tag">Daifuku Shuttle Rack M</span><span class="tag">Integración de datos</span><span class="tag">Contexto</span>
+    </div>
+  </div>
+</section>
+
+<footer class="pf">
+  <div class="wrap">
+    <nav class="pnav">
+      <a href="index.html"><span class="pl">Volver</span><span class="pt">Todos los proyectos</span></a>
+      <a href="dashboard-asr.html" class="next"><span class="pl">Siguiente</span><span class="pt">Dashboard Inteligente de Capacidad ASR</span></a>
+    </nav>
+    <div class="foot-meta">
+      <span>© <span id="year"></span> Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+      <span class="fm">Contexto · Inventario, ASRS &amp; BI</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/sites-bridge.js"></script>
+<script src="../assets/proyecto.js"></script>
+</body>
+</html>
