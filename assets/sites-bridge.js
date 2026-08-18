@@ -33,6 +33,12 @@
 
   var MAPA = {
     "index.html":                            "",
+
+    /* La simulacion del ASR vive en OTRO repositorio de GitHub Pages, no
+       en este sitio. Como comparten dominio, el puente la tomaba por
+       interna y la reescribia a la portada de Sites. En null no se toca:
+       se queda con su target="_blank" y abre en pestana nueva. */
+    "Portafolio/index.html":                 null,
     "proyectos/index.html":                  "portfolio-de-proyectos",
     "proyectos/que-es-un-asr.html":          "portfolio-de-proyectos/que-es-un-asr",
     "proyectos/dashboard-asr.html":          "portfolio-de-proyectos/dashboard-de-capacidad-asr",
