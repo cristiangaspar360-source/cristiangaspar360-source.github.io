@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guía · Solicitud de Totes en Batch con LT01</title>
+<style>
+  :root{--ink:#141923;--muted:#5c6573;--teal:#0f8a7e;--red:#c0392b;--line:#e2e6ec;--soft:#eef7f5}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);line-height:1.55;background:#fff}
+  .page{max-width:780px;margin:0 auto;padding:40px 28px}
+  header{border-bottom:3px solid var(--teal);padding-bottom:16px;margin-bottom:24px}
+  .tag{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:700}
+  h1{font-size:1.7rem;margin:8px 0 6px;letter-spacing:-.02em}
+  .lede{color:var(--muted);font-size:1rem;margin:0}
+  h2{font-size:1.05rem;margin:26px 0 10px;color:var(--teal)}
+  p{margin:0 0 12px}
+  ol,ul{margin:0 0 12px;padding-left:22px}
+  li{margin-bottom:6px}
+  .vs{display:flex;gap:16px;margin:16px 0}
+  .vs .col{flex:1;border:1px solid var(--line);border-radius:10px;padding:16px}
+  .vs .col.bad{border-color:#f3c6c0;background:#fdf3f2}
+  .vs .col.good{border-color:#bfe6de;background:var(--soft)}
+  .vs .n{font-size:2rem;font-weight:800;letter-spacing:-.03em}
+  .vs .bad .n{color:var(--red)}
+  .vs .good .n{color:var(--teal)}
+  .vs .lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .box{background:var(--soft);border-left:4px solid var(--teal);padding:14px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+  code{background:#f1f4f7;padding:2px 6px;border-radius:5px;font-size:.9em}
+  footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .print{margin:20px 0;text-align:center}
+  .print button{background:var(--teal);color:#fff;border:0;padding:11px 22px;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer}
+  @media print{.print{display:none}.page{padding:0}body{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <span class="tag">Guía de proceso · 1 página</span>
+    <h1>Solicitud de Totes en Batch con LT01</h1>
+    <p class="lede">Cómo pedir muchos totes con una sola orden de transporte, para que la cola del ASR no se infle con solicitudes fragmentadas.</p>
+  </header>
+
+  <h2>El problema</h2>
+  <p>Ninguna orden individual es un problema; el problema es <b>el conjunto</b>. Cada TO abierta ocupa una posición en la cola del ASR, y el sistema atiende por orden de llegada sin saber que las treinta que acaba de recibir son en realidad <b>una sola necesidad</b>. El rack se ocupa resolviendo solicitudes sueltas mientras la operación espera.</p>
+
+  <div class="vs">
+    <div class="col bad">
+      <div class="n">24</div>
+      <div class="lbl">TO abiertas · una por tote</div>
+    </div>
+    <div class="col good">
+      <div class="n">1</div>
+      <div class="lbl">TO abierta · batch con LT01</div>
+    </div>
+  </div>
+  <p style="text-align:center;color:var(--muted);font-size:.9rem">La cantidad de material solicitado es idéntica — sólo cambia cómo se le pide al sistema.</p>
+
+  <h2>Cómo se hace, paso a paso</h2>
+  <ol>
+    <li>Reúne todas las solicitudes del mismo movimiento (mismo origen y destino).</li>
+    <li>Entra a la transacción <code>LT01</code> en SAP WM.</li>
+    <li>Captura el <b>lote de totes como una sola orden</b>, no uno por uno.</li>
+    <li>Verifica que el material total coincida con la suma de las solicitudes individuales.</li>
+    <li>Confirma. El ASR recibe <b>una</b> orden identificable en la cola.</li>
+  </ol>
+
+  <div class="box">
+    <b>Usa la plantilla.</b> El archivo <code>Solicitud-Totes-Batch.xlsx</code> agrupa tus solicitudes individuales y te muestra el antes/después: cuántas TO abrirías de una en una vs. la única que abre el batch, con el material total idéntico.
+  </div>
+
+  <h2>Qué habilita</h2>
+  <ul>
+    <li><b>La cola del ASR deja de inflarse artificialmente</b> — menos ruido en el indicador de TO's del dashboard de capacidad.</li>
+    <li><b>La solicitud se rastrea como una unidad</b> — si algo falla, falla una orden identificable, no treinta sueltas.</li>
+    <li><b>Se enseña en un turno</b> — no requiere desarrollo ni permisos nuevos: es una técnica, y por eso sobrevive a los cambios de personal.</li>
+  </ul>
+
+  <div class="print"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div>
+
+  <footer>
+    <span>© Cristian Gaspar Aguayo · Villa Corona, Jal.</span>
+    <span>SAP LT01 · WM · Mejora de proceso</span>
+  </footer>
+</div>
+</body>
+</html>
