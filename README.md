@@ -145,7 +145,8 @@ más los descargables. Detalles:
 
 | Página de Sites | Archivo | Alto |
 |---|---|---|
-| Portafolio de proyectos | `proyectos/index.html` | **4 350** |
+| Portafolio de proyectos | `proyectos/index.html` | **4 600** |
+| Qué es un ASR (contexto) | `proyectos/que-es-un-asr.html` | **2 200** |
 | Dashboard de Capacidad ASR | `proyectos/dashboard-asr.html` | **6 200** |
 | Reporte de Errores ASR | `proyectos/reporte-errores-asr.html` | **5 400** |
 | Sellos con Peso Alto | `proyectos/sellos-peso-alto.html` | **5 700** |
@@ -158,6 +159,10 @@ más los descargables. Detalles:
 | Reportes por Turno | `proyectos/reportes-turno.html` | **2 150** |
 | Extractor de errores (herramienta) | `herramientas/extraccion-errores.html` | **2 050** |
 | Validador de reempaque (herramienta) | `herramientas/validacion-reempaque.html` | **1 650** |
+
+> **La página del ASR es un caso aparte.** Sus bloques arrancan cerrados (2 000 px), pero si el
+> lector los abre todos crece a ~5 300 px. Con el marco en 2 200 px verá scroll interno al abrirlos:
+> es el precio de que la página no abrume de entrada. Si prefieres cero scroll, ponlo en 5 400.
 
 Añade ~10 % de margen: las tipografías tardan un instante en cargar y el texto puede crecer una
 línea. Si sobra un poco de fondo no se nota; si falta, aparece la barra de scroll interna.
