@@ -23,7 +23,13 @@
      /view/cristiangaspar-portfolio/). Si dejas una vacía o la
      borras, ese enlace seguirá abriendo el HTML dentro del marco. */
 
-  var SITIO = "https://sites.google.com/view/cristiangaspar-portfolio/portfolio-de-proyectos?authuser=0";
+  /* SITIO es SOLO la direccion base y debe terminar en "/".
+     La URL final se arma como SITIO + el slug del MAPA, y los slugs ya
+     traen su ruta completa ("portfolio-de-proyectos/..."). Si aqui se
+     agrega una subpagina o un ?authuser=, la ruta sale repetida y el
+     parametro parte la direccion: los enlaces dejan de funcionar dentro
+     de Google Sites. */
+  var SITIO = "https://sites.google.com/view/cristiangaspar-portfolio/";
 
   var MAPA = {
     "index.html":                            "",
