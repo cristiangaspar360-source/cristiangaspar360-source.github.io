@@ -255,7 +255,7 @@
   "use strict";
   var B = [
     { id:'nd', t:'No Destination', crit:'Criticidad alta', color:'var(--risk)',
-      mean:'La ubicación destino asignada al tote es inválida, está ocupada o quedó inhabilitada.',
+      mean:'La ubicación destino asignada al tote es inválida o quedó inhabilitada — o el Daifuku está apagado.',
       sys:'Identificar la ubicación con error, corregir las localidades y —si la TO ya no sirve— eliminarla y generar una nueva.',
       phys:'Llevar el tote a la zona de retención hasta que la localidad quede liberada. No forzar el reingreso.',
       txns:['LS25','LT26','LT15','LT01'], esc:'Materiales / Automatización' },
@@ -263,22 +263,22 @@
       mean:'El tote llega sin el documento de recibo que lo respalda: la TO fue eliminada o nunca se generó.',
       sys:'Verificar el acomodo y el posteo, y asociar el expediente de SAP con el del sistema del ASR.',
       phys:'No reingresar el tote hasta confirmar que el posteo quedó hecho.',
-      txns:['LT22','LS24','LT01'], esc:'Moldeo / Calidad' },
+      txns:['LT22','LS24','LT01'], esc:'Materiales / Moldeo / Calidad' },
     { id:'ul', t:'Unknown Load', crit:'Criticidad media', color:'var(--warn)',
       mean:'El ASR detecta una carga que no reconoce contra ningún registro, o la localidad no es válida.',
       sys:'Borrar la carga en Wynsoft y validar la lectura; si la orden quedó inconsistente, cancelarla y generar una nueva.',
       phys:'Reintentar la lectura del tote en el punto de entrada.',
-      txns:['LT26','LS25','LT15','LT01'], esc:'Materiales / SAP' },
+      txns:['LT26','LS25','LT15','LT01'], esc:'Materiales / Automatización' },
     { id:'ib', t:'Invalid Barcode', crit:'Criticidad media', color:'var(--warn)',
       mean:'Hay una carga pendiente asociada al tote, o el código leído no es válido.',
       sys:'Borrar o validar la carga en Wynsoft y confirmar el estado del tote en el sistema.',
       phys:'Validar la lectura del scanner y cambiar la etiqueta del tote.',
-      txns:['LS24','LS25'], esc:'Materiales / SAP' },
+      txns:['LS24','LS25'], esc:'Materiales / SSHIP' },
     { id:'br', t:'Bad Read', crit:'Criticidad media-baja', color:'var(--accent)',
       mean:'La etiqueta del tote está dañada o ilegible y el scanner no la resuelve.',
       sys:'Borrar la carga en Wynsoft y validar la lectura una vez reetiquetado.',
       phys:'Reimprimir la etiqueta y volver a ingresar el tote.',
-      txns:['LS25'], esc:'Administración del ASR' }
+      txns:['LS25'], esc:'WRX Admin' }
   ];
 
   var host = document.getElementById('branches');

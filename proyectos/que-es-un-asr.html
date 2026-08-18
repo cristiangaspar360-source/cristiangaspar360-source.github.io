@@ -26,6 +26,22 @@
   .crack .side{flex:1;height:8px;border-radius:4px;background:var(--hc,var(--accent));opacity:.55}
   .crack .gapx{width:64px;height:8px;background:repeating-linear-gradient(90deg,var(--risk) 0 5px,transparent 5px 10px);flex:none}
   .crack-l{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+
+  /* Fases del flujo de rechazo */
+  .fases{display:grid;gap:11px;grid-template-columns:1fr;margin-bottom:24px}
+  @media(min-width:760px){.fases{grid-template-columns:repeat(3,1fr)}}
+  .fase{background:var(--ink-2);border:1px solid var(--line);border-left:3px solid var(--fc,var(--accent));border-radius:10px;padding:14px 15px}
+  .fase .fn{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;color:var(--fc,var(--accent));font-weight:600;margin-bottom:7px}
+  .fase .fd{color:var(--muted);font-size:.87rem;line-height:1.55}
+  .sub3{font-family:var(--font-display);font-weight:700;font-size:.97rem;letter-spacing:-.01em;margin:26px 0 12px}
+  .crit{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;font-family:var(--font-mono);font-size:.66rem;font-weight:600}
+  .crit.c1{background:color-mix(in srgb,var(--risk) 20%,transparent);color:var(--risk);border:1px solid color-mix(in srgb,var(--risk) 40%,transparent)}
+  .crit.c2{background:color-mix(in srgb,var(--crit) 20%,transparent);color:var(--crit);border:1px solid color-mix(in srgb,var(--crit) 40%,transparent)}
+  .crit.c3{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 38%,transparent)}
+  /* Transacciones */
+  .tx{display:grid;gap:6px}
+  .txr{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:center;background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.88rem;color:var(--muted)}
+  .txr .txc{font-family:var(--font-mono);font-size:.72rem;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:6px;padding:4px 0;text-align:center}
 </style>
 </head>
 <body>
@@ -156,23 +172,83 @@
           <p class="sec-note" style="margin-bottom:16px">Un corte real del reporte de errores. Ordenado por Pareto: las causas de arriba son las que de verdad mueven el número.</p>
           <div class="scrollx">
             <table class="dt" style="min-width:560px">
-              <thead><tr><th>Modo de falla</th><th class="r">Eventos</th><th class="r">%</th><th class="r">% acum.</th><th>Dónde vive el desajuste</th></tr></thead>
+              <thead><tr><th>Modo de falla</th><th class="r">Eventos</th><th class="r">%</th><th class="r">% acum.</th></tr></thead>
               <tbody>
-                <tr><td>Ubicación inhabilitada</td><td class="r n">46</td><td class="r n">30.7</td><td class="r n" style="color:var(--risk);font-weight:600">30.7</td><td><span class="chip">WRX</span></td></tr>
-                <tr><td>Tote con carga pendiente en WRX</td><td class="r n">29</td><td class="r n">19.3</td><td class="r n" style="color:var(--risk);font-weight:600">50.0</td><td><span class="chip">WRX</span></td></tr>
-                <tr><td>Sin expediente de recibo</td><td class="r n">28</td><td class="r n">18.7</td><td class="r n" style="color:var(--risk);font-weight:600">68.7</td><td><span class="chip">SAP</span></td></tr>
-                <tr><td>Código de barras ilegible</td><td class="r n">19</td><td class="r n">12.7</td><td class="r n">81.3</td><td><span class="chip">Etiqueta</span></td></tr>
-                <tr><td>Orden afectada</td><td class="r n">16</td><td class="r n">10.7</td><td class="r n">92.0</td><td><span class="chip">SAP</span></td></tr>
-                <tr><td>Tote duplicado en WRX</td><td class="r n">7</td><td class="r n">4.7</td><td class="r n">96.7</td><td><span class="chip">WRX</span></td></tr>
-                <tr><td>Carga desconocida</td><td class="r n">5</td><td class="r n">3.3</td><td class="r n">100.0</td><td><span class="chip">Ninguno</span></td></tr>
+                <tr><td>Ubicación inhabilitada</td><td class="r n">46</td><td class="r n">30.7</td><td class="r n" style="color:var(--risk);font-weight:600">30.7</td></tr>
+                <tr><td>Tote con carga pendiente en WRX</td><td class="r n">29</td><td class="r n">19.3</td><td class="r n" style="color:var(--risk);font-weight:600">50.0</td></tr>
+                <tr><td>Sin expediente de recibo</td><td class="r n">28</td><td class="r n">18.7</td><td class="r n" style="color:var(--risk);font-weight:600">68.7</td></tr>
+                <tr><td>Código de barras ilegible</td><td class="r n">19</td><td class="r n">12.7</td><td class="r n">81.3</td></tr>
+                <tr><td>Orden afectada</td><td class="r n">16</td><td class="r n">10.7</td><td class="r n">92.0</td></tr>
+                <tr><td>Tote duplicado en WRX</td><td class="r n">7</td><td class="r n">4.7</td><td class="r n">96.7</td></tr>
+                <tr><td>Carga desconocida</td><td class="r n">5</td><td class="r n">3.3</td><td class="r n">100.0</td></tr>
               </tbody>
-              <tfoot><tr><td>Total</td><td class="r">150</td><td class="r">100</td><td class="r"></td><td></td></tr></tfoot>
+              <tfoot><tr><td>Total</td><td class="r">150</td><td class="r">100</td><td class="r"></td></tr></tfoot>
             </table>
           </div>
           <div class="callout" style="margin-top:20px">
             <b>Tres causas explican el 68.7 %.</b> Ninguna de las tres es un problema mecánico: son una ubicación que el sistema tiene bloqueada, una carga que quedó pendiente y un recibo que nunca se registró. Es la grieta, medida.
           </div>
           <p class="note" style="margin-top:16px">Fuente: reporte de errores del ASR, periodo del 22 al 24 de enero de 2026. El día 23 concentra 94 de los 150 eventos.</p>
+        </div></div></div>
+      </article>
+
+      <article class="mod">
+        <button class="mod-h"><span class="mn">05</span>
+          <span><span class="mt">El flujo: del rechazo al reingreso</span><span class="mk">Diagrama de planta · 5 modos · 6 transacciones</span></span>
+          <span class="mx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </button>
+        <div class="mod-b"><div><div class="inner">
+          <p class="sec-note" style="margin-bottom:18px">Cuando un tote se rechaza, el diagnóstico no se improvisa: hay una ruta. Se contiene el flujo, se identifica cuál de los cinco mensajes salió, y se cierra reingresando el tote.</p>
+
+          <div class="fases">
+            <div class="fase" style="--fc:var(--risk)"><div class="fn">Fase 1 · Contención</div><div class="fd">¿Hay MIR detenidos? Bajar los totes del conveyor y consultar <b>Sorter History</b> para saber qué mensaje disparó el rechazo.</div></div>
+            <div class="fase" style="--fc:var(--warn)"><div class="fn">Fase 2 · Diagnóstico</div><div class="fd">Según el mensaje, una de cinco ramas. Cada una tiene su acción en sistema y su acción física.</div></div>
+            <div class="fase" style="--fc:var(--ok)"><div class="fn">Fase 3 · Cierre</div><div class="fd">Abrir el tote y ver si coincide con una TO en <b>LT22</b>: si sí, se elimina con <b>LT15</b>; si no, se reconstruye y se genera una nueva en <b>LT01</b>. Reingresar al ASR.</div></div>
+          </div>
+
+          <h3 class="sub3">Los cinco mensajes, y quién los resuelve</h3>
+          <div class="scrollx">
+            <table class="dt" style="min-width:640px">
+              <thead><tr><th class="r">Crit.</th><th>Mensaje en el rechazo</th><th>Qué significa</th><th>Responsable y apoyos</th></tr></thead>
+              <tbody>
+                <tr><td class="r"><span class="crit c1">1</span></td><td><b>No Destination</b></td><td>Ubicación inhabilitada o Daifuku apagado.</td><td>Materiales / Automatización</td></tr>
+                <tr><td class="r"><span class="crit c2">2</span></td><td><b>Sin Expediente</b></td><td>La TO fue eliminada o nunca se generó.</td><td>Materiales / Moldeo / Calidad</td></tr>
+                <tr><td class="r"><span class="crit c3">3</span></td><td><b>Unknown Load</b></td><td>El tote no fue escaneado correctamente.</td><td>Materiales / Automatización</td></tr>
+                <tr><td class="r"><span class="crit c3">3</span></td><td><b>Invalid Barcode</b></td><td>El tote tiene carga pendiente en el sistema WRX.</td><td>Materiales / SSHIP</td></tr>
+                <tr><td class="r"><span class="crit c3">3</span></td><td><b>Barcode Bad Read</b></td><td>La etiqueta del tote no se pudo leer.</td><td>WRX Admin</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note" style="margin-top:14px">Fíjate en la última columna: <b>ninguno de los cinco se resuelve solo desde el almacén</b>. Por eso el flujo tuvo que ser un acuerdo entre áreas y no un instructivo de materiales.</p>
+
+          <h3 class="sub3">Las transacciones que hay que saberse</h3>
+          <div class="tx">
+            <div class="txr"><span class="txc">LT22</span><span>Consultar TO abierta</span></div>
+            <div class="txr"><span class="txc">LT01</span><span>Generar nueva TO</span></div>
+            <div class="txr"><span class="txc">LT26</span><span>Consultar el historial de una localidad (tote)</span></div>
+            <div class="txr"><span class="txc">LS24</span><span>Consulta de inventario por número de parte</span></div>
+            <div class="txr"><span class="txc">LS25</span><span>Consultar stock por localidad</span></div>
+            <div class="txr"><span class="txc">LT15</span><span>Cancelar una TO</span></div>
+          </div>
+
+          <h3 class="sub3">Qué pasa si el flujo no se sigue</h3>
+          <div class="alert">
+            <ul style="margin:0;padding-left:18px;line-height:1.9">
+              <li>Uso de material incorrecto en producción</li>
+              <li>Paros por totes no identificados</li>
+              <li>Rechazo de cliente y pérdida de trazabilidad</li>
+              <li>Aumento del desperdicio</li>
+              <li>Saturación del almacén con totes incorrectos</li>
+            </ul>
+          </div>
+          <p class="note" style="margin-top:16px">Esta lista es la respuesta a «¿y por qué tanto trámite por un tote?». El costo de saltarse el flujo no lo paga el almacén: lo paga producción y, al final, el cliente.</p>
+
+          <div class="acts" style="margin-top:22px">
+            <a class="btn btn-line" href="rechazos-asr.html">Ver el árbol completo, rama por rama
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+            <a class="btn btn-line" href="reporte-errores-asr.html">Cómo se miden estos errores
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
         </div></div></div>
       </article>
 
