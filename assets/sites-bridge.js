@@ -9,8 +9,11 @@
 
    Este script detecta que está embebido y reescribe los enlaces
    internos para que apunten a la PÁGINA DE SITES equivalente y
-   naveguen la ventana completa (target="_top"). Así cada proyecto
+   se abran fuera del marco (target="_blank"). Así cada proyecto
    cuenta como una visita real y el visitante conserva tu menú.
+
+   No se usa target="_top" porque el sandbox de Sites no incluye
+   allow-top-navigation: el navegador cancelaría el clic.
 
    Fuera de Sites (abriendo el HTML directo) no hace nada: los
    enlaces relativos funcionan como siempre.
@@ -49,7 +52,7 @@
     "proyectos/sellos-peso-alto.html":       "perfil/portafolio-de-proyectos/sellos-con-peso-alto",
     "proyectos/reportes-turno.html":         "perfil/portafolio-de-proyectos/reportes-operativos-por-turno",
     "proyectos/reporte-modular.html":        "perfil/portafolio-de-proyectos/agente-de-reporte-modular",
-    "proyectos/solicitud-totes.html":        "perfil/portafolio-de-proyectos/solicitud-de-totes-en-sap",
+    "proyectos/solicitud-totes.html":        "perfil/portafolio-de-proyectos/Solicitud-de-totes-en-sap",
     "proyectos/roles-operativos.html":       "perfil/portafolio-de-proyectos/roles-operativos"
   };
 
@@ -112,7 +115,15 @@
       var dest = destinoSites(href);
       if (dest) {
         a.href = dest;
-        a.target = "_top";          // navega la ventana, no el iframe
+        // OJO: aqui NO sirve target="_top". Google Sites embebe con
+        // sandbox="allow-scripts allow-popups allow-forms allow-same-origin
+        // allow-popups-to-escape-sandbox allow-downloads
+        // allow-storage-access-by-user-activation". Como NO incluye
+        // allow-top-navigation, el navegador CANCELA cualquier intento de
+        // navegar la ventana padre y el clic no hace nada. allow-popups si
+        // esta, asi que _blank abre la pagina de Sites en pestana nueva:
+        // el visitante conserva el menu y la visita si se registra.
+        a.target = "_blank";
         a.rel = "noopener";
       }
       a.dataset.sitesReady = "1";
