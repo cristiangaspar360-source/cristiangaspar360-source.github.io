@@ -25,7 +25,7 @@
 
   /* SITIO es SOLO la direccion base y debe terminar en "/".
      La URL final se arma como SITIO + el slug del MAPA, y los slugs ya
-     traen su ruta completa ("portfolio-de-proyectos/..."). Si aqui se
+     traen su ruta completa ("perfil/portafolio-de-proyectos/..."). Si aqui se
      agrega una subpagina o un ?authuser=, la ruta sale repetida y el
      parametro parte la direccion: los enlaces dejan de funcionar dentro
      de Google Sites. */
@@ -39,18 +39,18 @@
        interna y la reescribia a la portada de Sites. En null no se toca:
        se queda con su target="_blank" y abre en pestana nueva. */
     "Portafolio/index.html":                 null,
-    "proyectos/index.html":                  "portfolio-de-proyectos",
-    "proyectos/que-es-un-asr.html":          "portfolio-de-proyectos/que-es-un-asr",
-    "proyectos/dashboard-asr.html":          "portfolio-de-proyectos/dashboard-de-capacidad-asr",
-    "proyectos/reporte-errores-asr.html":    "portfolio-de-proyectos/reporte-de-errores-asr",
-    "proyectos/junta-arranque.html":         "portfolio-de-proyectos/junta-de-arranque-de-turno",
-    "proyectos/validacion-reempaque.html":   "portfolio-de-proyectos/validacion-de-reempaque",
-    "proyectos/rechazos-asr.html":           "portfolio-de-proyectos/ingreso-de-rechazos-en-asr",
-    "proyectos/sellos-peso-alto.html":       "portfolio-de-proyectos/sellos-con-peso-alto",
-    "proyectos/reportes-turno.html":         "portfolio-de-proyectos/reportes-operativos-por-turno",
-    "proyectos/reporte-modular.html":        "portfolio-de-proyectos/agente-de-reporte-modular",
-    "proyectos/solicitud-totes.html":        "portfolio-de-proyectos/solicitud-de-totes-en-sap",
-    "proyectos/roles-operativos.html":       "portfolio-de-proyectos/roles-operativos"
+    "proyectos/index.html":                  "perfil/portafolio-de-proyectos",
+    "proyectos/que-es-un-asr.html":          "perfil/portafolio-de-proyectos/que-es-un-asr",
+    "proyectos/dashboard-asr.html":          "perfil/portafolio-de-proyectos/dashboard-de-capacidad-asr",
+    "proyectos/reporte-errores-asr.html":    "perfil/portafolio-de-proyectos/reporte-de-errores-asr",
+    "proyectos/junta-arranque.html":         "perfil/portafolio-de-proyectos/junta-de-arranque-de-turno",
+    "proyectos/validacion-reempaque.html":   "perfil/portafolio-de-proyectos/validacion-de-reempaque",
+    "proyectos/rechazos-asr.html":           "perfil/portafolio-de-proyectos/ingreso-de-rechazos-en-asr",
+    "proyectos/sellos-peso-alto.html":       "perfil/portafolio-de-proyectos/sellos-con-peso-alto",
+    "proyectos/reportes-turno.html":         "perfil/portafolio-de-proyectos/reportes-operativos-por-turno",
+    "proyectos/reporte-modular.html":        "perfil/portafolio-de-proyectos/agente-de-reporte-modular",
+    "proyectos/solicitud-totes.html":        "perfil/portafolio-de-proyectos/solicitud-de-totes-en-sap",
+    "proyectos/roles-operativos.html":       "perfil/portafolio-de-proyectos/roles-operativos"
   };
 
   /* ==========  2. De aquí para abajo no hay que tocar nada  ========== */
